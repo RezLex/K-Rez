@@ -1,0 +1,92 @@
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+input,
+select,
+textarea,
+button {
+  font-size: 16px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+textarea {
+  font-family: inherit;
+  resize: vertical;
+  width: 100%;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+}
+
+button.primary {
+  background: var(--accent);
+  color: #05121f;
+  font-weight: 600;
+}
+
+button.ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+button.danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.error {
+  color: var(--danger);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--gap);
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--gap);
+}
+
+.song-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.song-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px 4px 4px 14px;
+}
+
+.song-link {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 12px 0;
+  color: var(--text);
+}
