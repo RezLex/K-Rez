@@ -288,15 +288,8 @@ body.has-cover-accent .player-bar .mix-segment.active {
   display: flex;
   align-items: center;
   background: var(--glass-bg);
-  padding-top: 100px;
-
   border-bottom: 2px solid var(--glass-border);
-  
   padding: 0 var(--gap);
-  /* Mismo motivo que .screen-header en base.css: mitigación documentada del
-     bug de flicker de backdrop-filter en Chrome — aísla el blur en su
-     propia capa de composición. */
-  will-change: transform;
 }
 
 /* `.screen-header.bar` (dos clases) le gana en especificidad a `.bar` sola

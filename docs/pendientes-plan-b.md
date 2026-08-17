@@ -45,16 +45,15 @@ Tunnel de Plan A), verificado alcanzable. Ya no bloquea la Fase 5.
   `mix-control.js`/`mix-source.js` sugiere que el código ya usa `vocals`, así que esto es una
   desactualización de doc, no necesariamente un pendiente de código — confirmar y corregir el README.
 
-## Bug pendiente, introducido en el último commit (`5b607e8`, "bad fix")
+## Bug del commit `5b607e8` ("bad fix") — ✅ corregido (2026-08-17)
 
-`web/css/base.css`, regla `.screen-header`: quedó con `padding-top: 100px` (no tiene sentido junto a
-`min-height: var(--bar-height)`, 64px — rompe el alto fijo de 64px compartido con `.player-bar` y el
-sidebar, documentado en la sección 10 del README), `backdrop-filter`/`box-shadow` borrados dejando
-líneas en blanco en vez de limpiar la regla, y un comentario auto-referencial que ya no tiene sentido
-("Mismo motivo que `.screen-header` en base.css", escrito dentro de la propia `.screen-header`). El
-nombre del commit ("bad fix") y el diff sugieren un experimento que quedó a medio revertir. Ya está en
-`main`, que se deploya automático a GitHub Pages en cada push — probablemente ya está en producción así.
-Pendiente: revisar y corregir esa regla.
+`web/css/base.css`, regla `.screen-header`, tenía `padding-top: 100px` muerto (lo pisaba el `padding: 0
+var(--gap)` que venía después en la misma regla, así que no se veía en pantalla, pero quedaba como cruft
+confuso), líneas en blanco donde antes había `backdrop-filter`/`box-shadow`, y un `will-change:
+transform` con un comentario copiado tal cual de `.player-bar` (`player.css`) que ahí sí tiene sentido
+("Mismo motivo que `.screen-header`...") pero acá quedaba autorreferencial y sin motivo real (esta regla
+ya no tiene `backdrop-filter` que aislar). Se limpió la regla completa — queda consistente con la
+sección 10 del README ("SIN backdrop-filter, a diferencia de `.player-bar`/`.songs-sidebar`").
 
 ## Documentación desactualizada
 
