@@ -1,9 +1,10 @@
 import { getIdToken } from "../auth/auth-service.js";
 
-// Solo alcanzable por Tailscale por ahora (http, no https) — mixed-content
-// bloqueará esto desde GitHub Pages hasta que Plan A tenga el Cloudflare
-// Tunnel (https) listo. Cambiar entonces.
-export const MEDIA_BASE_URL = "http://100.82.19.31:8081";
+// Cloudflare Tunnel de Plan A (HTTPS, público) — reemplaza la IP de Tailscale
+// directa (http://100.82.19.31:8081) desde 2026-08-17, resolviendo el bloqueo
+// de mixed-content contra GitHub Pages. Pendiente: confirmar si Plan A activa
+// Cloudflare Access sobre este hostname (ver docs/pendientes-plan-a.md).
+export const MEDIA_BASE_URL = "https://k-api.rez-lex.com";
 
 async function authorizedFetch(path, options = {}) {
   const idToken = await getIdToken();

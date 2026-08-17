@@ -4,8 +4,9 @@ App web de gestión de canciones con letra sincronizada, reproductor integrado (
 YouTube) y modo de control remoto entre dispositivos del mismo usuario.
 
 Este documento cubre la parte de **Plan B**: todo el frontend (`web/`), Firebase Auth/Firestore,
-y su contrato con el servidor de **Plan A**. Lo que falta por hacer está en
-[`PENDIENTES.md`](./PENDIENTES.md).
+y su contrato con el servidor de **Plan A**. Lo que falta por hacer está separado por sesión:
+[`pendientes-plan-a.md`](./pendientes-plan-a.md) (servidor) y
+[`pendientes-plan-b.md`](./pendientes-plan-b.md) (frontend).
 
 ## 1. Arquitectura general — dos sesiones, un solo repo
 
@@ -130,13 +131,29 @@ songs/{songId}
     { nombre: string, timestampSeconds: number | null }
   ]
   versiones: {
-    original: { tipo: "archivo" | "youtube", url: string, offsetSeconds: number }
-    karaoke:  { tipo: "archivo" | "youtube", url: string, offsetSeconds: number }
+    original: { tipo: "archivo" | "youtube", url: string, offsetSeconds: number, fileName: string,
+                vocalsUrl: string, vocalsFileName: string }
+    karaoke:  { tipo: "archivo" | "youtube", url: string, offsetSeconds: number, fileName: string,
+                vocalsUrl: string, vocalsFileName: string }
   }
+  caratulaUrl: string
+  caratulaFileName: string
 
 config/access
   allowedEmail: string    (único documento, no tiene songId — es config global)
 ```
+
+**Mezcla instrumental/voz (`vocalsUrl`):** cada versión tiene su propio par `vocalsUrl`/`vocalsFileName`
+en el esquema, pero en la práctica solo `karaoke` lo usa hoy — `isMixActive()`
+(`player/version-resolution.js`) solo revisa `song.versiones.karaoke`. Del lado del storage de Plan A,
+`vocals` y `caratula` (imagen) son claves de versión propias (junto a `original`/`karaoke`), resueltas
+con el mismo flujo de `/api/media-token` que el resto — `resolveMixUrls()` pide `getPlayableUrl(song.id,
+"karaoke")` (instrumental) y `getPlayableUrl(song.id, "vocals")` en paralelo. El segmented control
+"Inst/Original/Voz" (`mix-control.js`) mezcla ambas pistas vía `MixSource`
+(`player/mix-source.js`), que las mantiene sincronizadas con un `DRIFT_THRESHOLD_SECONDS` de tolerancia
+y sube/baja el volumen de cada una en vez de hacer switch — `setMix(t)` pone el instrumental en
+`min(1, 2·(1−t))` y la voz en `min(1, 2·t)`, así que en `t=0.5` ("Original") ambas pistas suenan al 100%
+a la vez, en vez de cortar una y prender la otra.
 
 **Decisiones de diseño no obvias:**
 - Los `timestampSeconds` de `letra[]` y `secciones[]` son **siempre relativos a la línea de tiempo de
@@ -464,8 +481,16 @@ sin importar el aspect ratio de la ventana. `opacity`/`transform: scale()` reacc
   reproduciendo con el analizador enganchado, o si no una onda idle de baja amplitud (pausado, o playing
   sin poder analizar — YouTube, CORS, autoplay policy). Nunca se mezclan (antes se tomaba el máximo de las
   dos, y la real casi siempre le ganaba a la idle sin que se notara su aporte). El loop arranca con
-  `startIdleLoop()` apenas hay sesión (no recién al darle play) y solo escribe en `body.style` si
+  `startIdleLoop()` apenas hay sesión (no recién al darle play) y solo escribe `--audio-level` si
   `body.has-cover-accent` está presente — sin eso, no tiene ningún efecto visual y sería puro gasto.
+- **Escritura de `--audio-level` vía CSSOM, no `body.style`**: `setAudioLevel()` escribe sobre una regla
+  `:root { --audio-level: 0; }` insertada en un `<style>` propio (`ensureLevelRule()`), en vez de
+  `document.body.style.setProperty(...)` como antes. `body.style.setProperty` a 60fps pisaba el atributo
+  `style` de `body` constantemente — cualquier edición manual en el panel Styles de DevTools (que
+  sincroniza contra ese mismo atributo) se perdía antes de aplicarse. Una regla CSS aparte no toca ningún
+  atributo `style`, así que DevTools deja de competir con el loop. Se declara en `:root` y no en `body`
+  porque las custom properties heredan igual hacia abajo — `body.has-cover-accent::before` la sigue
+  leyendo sin cambios.
 - **Solo versiones de archivo**: un video de YouTube corre en un iframe cross-origin, no hay forma de leer
   su audio con Web Audio API — con YouTube activo, cae al pulso idle.
 
@@ -498,5 +523,6 @@ outline) — reemplazan a los caracteres Unicode sueltos que se usaban antes (�
 7. Para producción: push a GitHub, activar Pages (Settings → Pages → Source: GitHub Actions), agregar
    el dominio resultante a CORS y a Authorized domains de Firebase Auth.
 
-Ver [`PENDIENTES.md`](./PENDIENTES.md) para el estado real de este último paso y todo lo demás que
-falta.
+Ver [`pendientes-plan-b.md`](./pendientes-plan-b.md) para el estado real de este último paso y todo lo
+demás que falta del lado del frontend, y [`pendientes-plan-a.md`](./pendientes-plan-a.md) para lo que
+falta del lado del servidor.
