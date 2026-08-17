@@ -51,6 +51,30 @@ let currentUrl = null;
 let isPlaying = false;
 let level = 0;
 let rafHandle = null;
+let levelRule = null;
+
+// --audio-level se escribe acá, vía CSSOM sobre una regla propia, en vez de
+// con document.body.style.setProperty como antes: ese enfoque pisaba el
+// atributo style de body 60 veces por segundo, y cualquier edición manual
+// en el panel Styles de F12 (que DevTools sincroniza contra ese mismo
+// atributo) se perdía antes de llegar a aplicarse. Una regla CSS aparte no
+// toca el atributo style de ningún elemento, así que F12 deja de competir
+// con este loop. Se declara en :root (no en body) porque las custom
+// properties heredan hacia abajo igual — body.has-cover-accent::before
+// (ver base.css) la sigue leyendo sin cambios.
+function ensureLevelRule() {
+  if (levelRule) return levelRule;
+  const styleEl = document.createElement("style");
+  document.head.appendChild(styleEl);
+  const sheet = styleEl.sheet;
+  const index = sheet.insertRule(":root { --audio-level: 0; }", sheet.cssRules.length);
+  levelRule = sheet.cssRules[index];
+  return levelRule;
+}
+
+function setAudioLevel(value) {
+  ensureLevelRule().style.setProperty("--audio-level", value);
+}
 
 function ensureGraph() {
   if (audioContext) return true;
@@ -132,7 +156,7 @@ function tick(now) {
   // Sin este guard se seguía escribiendo en body.style igual, 60 veces por
   // segundo, para nada.
   if (document.body.classList.contains("has-cover-accent")) {
-    document.body.style.setProperty("--audio-level", display.toFixed(3));
+    setAudioLevel(display.toFixed(3));
   }
   rafHandle = requestAnimationFrame(tick);
 }
@@ -211,7 +235,7 @@ export function stop() {
     rafHandle = null;
   }
   level = 0;
-  document.body.style.setProperty("--audio-level", "0");
+  setAudioLevel("0");
 }
 
 // Todo el estado de este módulo es privado (closures) — sin esto, diagnosticar

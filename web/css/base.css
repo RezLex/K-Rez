@@ -289,9 +289,9 @@ body.has-cover-accent .player-bar .mix-segment.active {
   align-items: center;
   background: var(--glass-bg);
   padding-top: 100px;
-  backdrop-filter: blur(20px) saturate(160%);
+
   border-bottom: 2px solid var(--glass-border);
-  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 -8px 24px rgba(0, 0, 0, 0.25);
+  
   padding: 0 var(--gap);
   /* Mismo motivo que .screen-header en base.css: mitigación documentada del
      bug de flicker de backdrop-filter en Chrome — aísla el blur en su
