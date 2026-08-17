@@ -15,7 +15,14 @@ import { SONGS_COLLECTION } from "./firestore-paths.js";
 import { getCurrentUser } from "../auth/auth-service.js";
 
 function emptyVersion() {
-  return { tipo: "archivo", url: "", offsetSeconds: 0 };
+  return {
+    tipo: "archivo",
+    url: "",
+    offsetSeconds: 0,
+    fileName: "",
+    vocalsUrl: "",
+    vocalsFileName: "",
+  };
 }
 
 export async function listSongsForUser(uid) {
@@ -49,6 +56,8 @@ export async function createSong({ nombre, artista, key = "", bpm = null }) {
       original: emptyVersion(),
       karaoke: emptyVersion(),
     },
+    caratulaUrl: "",
+    caratulaFileName: "",
   };
   const ref = await addDoc(collection(db, SONGS_COLLECTION), data);
   return { id: ref.id, ...data };

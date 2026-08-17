@@ -1,8 +1,15 @@
 import { EventEmitter } from "../utils/events.js";
 import { FileAudioSource } from "./file-audio-source.js";
 import { YoutubeSource } from "./youtube-source.js";
+import { MixSource } from "./mix-source.js";
 
-const RELAYED_EVENTS = ["ready", "play", "pause", "timeupdate", "ended", "error"];
+// "timeupdate" NO se relaya de la fuente — YoutubeSource lo emite por poll
+// cada 250ms y el timeupdate nativo de <audio> anda por el mismo orden de
+// magnitud (throttleado por el navegador), suficiente para la barra de
+// progreso pero se nota como delay al resaltar la letra en vivo (contra un
+// seek por click, que es instantáneo). Se reemplaza por un loop propio de
+// requestAnimationFrame (~16ms) mientras está sonando — ver #startTimeLoop.
+const RELAYED_EVENTS = ["ready", "play", "pause", "ended", "error"];
 const CROSSFADE_MS = 600;
 const CROSSFADE_STEPS = 12;
 
@@ -18,6 +25,7 @@ export class PlayerController extends EventEmitter {
   #activeVersionKey = null;
   #unsubscribers = [];
   #isPlaying = false;
+  #rafHandle = null;
 
   constructor(song, { youtubeContainer } = {}) {
     super();
@@ -33,12 +41,25 @@ export class PlayerController extends EventEmitter {
     return this.#sources.get(this.#activeVersionKey);
   }
 
+  // Para cuando una vista se monta sobre una sesión que ya estaba sonando
+  // (ver player-session.js): no hay un evento "play"/"pause" nuevo por
+  // venir, así que el botón de play necesita poder preguntar el estado
+  // actual en vez de esperar uno.
+  get isPlaying() {
+    return this.#isPlaying;
+  }
+
+  // "mix" no es una entrada real de `versiones` — las pistas de la mezcla
+  // (instrumental + voces) son stems del mismo archivo que karaoke, así que
+  // comparten su offsetSeconds en vez de tener uno propio.
   offsetOf(versionKey) {
-    return this.#song.versiones[versionKey]?.offsetSeconds ?? 0;
+    const key = versionKey === "mix" ? "karaoke" : versionKey;
+    return this.#song.versiones[key]?.offsetSeconds ?? 0;
   }
 
   setVersionOffset(versionKey, offsetSeconds) {
-    this.#song.versiones[versionKey].offsetSeconds = offsetSeconds;
+    const key = versionKey === "mix" ? "karaoke" : versionKey;
+    this.#song.versiones[key].offsetSeconds = offsetSeconds;
   }
 
   setVersionUrl(versionKey, url) {
@@ -64,11 +85,23 @@ export class PlayerController extends EventEmitter {
     this.#unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.#unsubscribers = RELAYED_EVENTS.map((event) =>
       source.on(event, (payload) => {
-        if (event === "play") this.#isPlaying = true;
+        if (event === "play") {
+          this.#isPlaying = true;
+          this.#startTimeLoop();
+        }
         if (event === "pause" || event === "ended") this.#isPlaying = false;
         this.emit(event, payload);
       })
     );
+  }
+
+  #startTimeLoop() {
+    if (this.#rafHandle !== null) return;
+    const tick = () => {
+      this.emit("timeupdate", { currentTime: this.getCurrentTime() });
+      this.#rafHandle = this.#isPlaying ? requestAnimationFrame(tick) : null;
+    };
+    this.#rafHandle = requestAnimationFrame(tick);
   }
 
   // Precarga una versión en segundo plano (sin activarla ni emitir sus
@@ -93,6 +126,39 @@ export class PlayerController extends EventEmitter {
     }
     await source.load(version.url);
     this.#loadedVersions.add(versionKey);
+  }
+
+  async loadMix(instrumentalUrl, vocalsUrl) {
+    const source = this.#sources.get("mix") ?? new MixSource();
+    this.#sources.set("mix", source);
+    this.#relay(source);
+    this.#activeVersionKey = "mix";
+    await source.loadTracks(instrumentalUrl, vocalsUrl);
+    this.#loadedVersions.add("mix");
+  }
+
+  async reloadMix(instrumentalUrl, vocalsUrl) {
+    const currentSource = this.#sources.get("mix");
+    const currentTime = currentSource ? currentSource.getCurrentTime() : 0;
+    const currentMix = currentSource?.getMix();
+    const wasPlaying = this.#isPlaying;
+
+    currentSource?.destroy();
+    this.#sources.delete("mix");
+    this.#loadedVersions.delete("mix");
+
+    await this.loadMix(instrumentalUrl, vocalsUrl);
+    if (currentMix !== undefined) this.setMix(currentMix);
+    this.seekTo(currentTime);
+    if (wasPlaying) this.play();
+  }
+
+  setMix(t) {
+    this.activeSource?.setMix?.(t);
+  }
+
+  getMix() {
+    return this.activeSource?.getMix?.() ?? 0.5;
   }
 
   async switchTo(versionKey) {
@@ -157,6 +223,10 @@ export class PlayerController extends EventEmitter {
 
   seekTo(seconds) {
     this.activeSource?.seekTo(seconds);
+    // Con el loop de timeupdate corriendo solo mientras suena (ver
+    // #startTimeLoop), un seek en pausa no dispararía ningún timeupdate — se
+    // emite uno al toque para que la barra/letra reflejen la nueva posición.
+    this.emit("timeupdate", { currentTime: this.getCurrentTime() });
   }
 
   getCurrentTime() {
@@ -176,6 +246,7 @@ export class PlayerController extends EventEmitter {
   }
 
   destroy() {
+    if (this.#rafHandle !== null) cancelAnimationFrame(this.#rafHandle);
     this.#unsubscribers.forEach((unsubscribe) => unsubscribe());
     this.#sources.forEach((source) => source.destroy());
     this.#sources.clear();

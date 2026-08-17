@@ -1,15 +1,36 @@
+/* min-height (no height fijo): con la mezcla activa, .mix-segmented puede
+   envolver a una segunda fila en pantallas angostas (ver comment de
+   player-bar.js) — el piso es el mismo --bar-height que .screen-header
+   (mismo token en base.css), así las dos barras miden igual en el caso
+   normal de una sola fila, pero esta puede crecer si hace falta. */
 .player-bar {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 20;
-  background: var(--bg);
-  border-top: 1px solid var(--border);
-  padding: 10px var(--gap);
+  min-height: var(--bar-height);
+  display: flex;
+  align-items: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border-top: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 -8px 24px rgba(0, 0, 0, 0.25);
+  padding: 0 var(--gap);
+  /* Mismo motivo que .screen-header en base.css: mitigación documentada del
+     bug de flicker de backdrop-filter en Chrome — aísla el blur en su
+     propia capa de composición. */
+  will-change: transform;
 }
 
+/* width:100% a propósito: como .player-bar ahora es flex (ver arriba), sin
+   esto un flex item mide por default el contenido (shrink-to-fit) en vez de
+   ocupar toda la fila — perdería el efecto de max-width + margin:auto
+   (llenar hasta 1100px y centrarse, en vez de quedar angosto pegado a la
+   izquierda). */
 .player-bar-inner {
+  width: 100%;
   max-width: 1100px;
   margin: 0 auto;
 }
@@ -20,9 +41,16 @@
   gap: var(--gap);
 }
 
+/* color: #fff pisa el #05121f de button.primary (components.css) — ese tono
+   oscuro se pensó para el --accent celeste por default, pero se volvía casi
+   ilegible contra el --accent rojizo/oscuro que deja un acento de carátula
+   (ver base.css). Blanco funciona bien contra cualquier color de acento.
+   Afecta tanto al play/pause como al botón de versión activa (Karaoke) —
+   los dos son .primary dentro de esta barra. */
 .player-transport button.primary {
   min-width: 48px;
   padding: 10px;
+  color: #fff;
 }
 
 .player-transport button.seek-step {
@@ -63,6 +91,131 @@
 
 .seek-buffer-fill.buffer-original-file {
   background: #2c5a8f;
+}
+
+/* Modo mezcla: un solo fill (no hay split original/karaoke que mostrar). */
+.seek-buffer-fill.full {
+  height: 100%;
+}
+
+/* Wrapper sin overflow — ancla (position:relative) el popover flotante del
+   slider de ajuste fino. No puede vivir en .mix-segmented: ese overflow:hidden
+   (necesario para redondear las puntas del grupo de botones) recortaría
+   cualquier hijo posicionado fuera de su caja, incluido el popover. */
+.mix-control {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Segmented control [Inst | Original | Voz | ▾] — se ve como un solo botón:
+   un borde/radio exterior compartido, divisores finos entre segmentos, sin
+   borde/radio propio en cada uno. */
+.mix-segmented {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+/* Mismo padding vertical y font-size que el resto de los botones del
+   transport (regla global `button`) — solo se pisa lo necesario para que
+   se vean como segmentos de un solo grupo (sin borde/radio individual), no
+   la tipografía ni la altura. */
+.mix-segment {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 16px;
+  padding: 12px 10px;
+}
+
+/* var(--glass-border), no var(--border): tiene que ser el mismo color que
+   el borde exterior de .mix-segmented (arriba) — con var(--border) fijo, el
+   divisor entre segmentos desentonaba contra ese borde cuando hay acento de
+   carátula (--glass-border pasa a teñirse del color de la canción, ver
+   base.css). */
+.mix-segment + .mix-segment {
+  border-left: 1px solid var(--glass-border);
+}
+
+.mix-segment-toggle {
+  padding: 12px 10px;
+  font-size: 16px;
+}
+
+/* .open (popover desplegado) es un estado más tenue que .active (valor
+   seleccionado) — si coinciden los dos (mezcla personalizada + popover
+   abierto), .active gana por venir después en la cascada. */
+.mix-segment-toggle.open {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.mix-segment.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.mix-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 20, 24, 0.72);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.mix-slider {
+  width: 140px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mix-slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.mix-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.mix-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  margin-top: -4px;
+  cursor: pointer;
+}
+
+.mix-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  cursor: pointer;
 }
 
 .seek-slider {
@@ -108,13 +261,19 @@
   cursor: pointer;
 }
 
+/* Sin ancho/aspect-ratio fijo a propósito: el tamaño lo da el flex de
+   .live-layout (columna en mobile, fila en desktop) para aprovechar TODO el
+   alto disponible entre el header y la player-bar, no una caja 16:9. Sin
+   fondo negro: las franjas que deja object-fit:contain cuando la carátula
+   no llena la columna dejan ver el fondo real de la página (el degradado
+   de --cover-accent si hay carátula con acento, o var(--bg) si no). */
 .youtube-container {
-  width: 100%;
-  aspect-ratio: 16 / 9;
   border-radius: var(--radius);
   overflow: hidden;
-  background: #000;
+  background: transparent;
   position: relative;
+  flex: 1;
+  min-height: 0;
 }
 
 .youtube-container iframe {
@@ -122,6 +281,31 @@
   height: 100%;
   border: 0;
   display: block;
+}
+
+/* Fuera del modo "Original + YouTube" nunca se muestra el video (aunque haya
+   un iframe montado en background por preload), pero el espacio se conserva
+   — visibility, no display, para que el layout de dos columnas no salte al
+   cambiar de modo. Se oculta solo el iframe, no el contenedor entero, para
+   que la carátula (si hay) pueda seguir mostrándose en el mismo lugar. El
+   audio sigue sonando: el iframe oculto por visibility sigue funcionando. */
+.youtube-container.hide-video iframe {
+  visibility: hidden;
+}
+
+/* object-fit: contain — la carátula se ve completa, nunca recortada; si su
+   relación de aspecto no llena toda la columna, quedan franjas del fondo de
+   .youtube-container (transparente, ver más arriba) a los costados o
+   arriba/abajo, con la imagen centrada (object-position default: 50% 50%).
+   El tamaño de la columna (todo el alto disponible) lo sigue fijando
+   .youtube-container/.live-layout, la imagen nunca lo altera. */
+.cover-art {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
 }
 
 .version-panel {
@@ -134,6 +318,27 @@
   gap: var(--gap);
 }
 
+/* Panel sin acción disponible todavía (Original bloqueado por la mezcla,
+   Voces esperando el instrumental) — mismo tratamiento visual para que se
+   lea de un vistazo como "inactivo", no como roto o vacío por error. */
+.version-panel.locked {
+  border-style: dashed;
+  background: transparent;
+}
+
+.version-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.version-panel-body {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+}
+
 .version-panels {
   display: flex;
   flex-direction: column;
@@ -143,38 +348,89 @@
 @media (min-width: 900px) {
   .version-panels {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   }
 }
 
+/* .live-main (envuelve chips/status/live-layout, ver song-live-view.js)
+   reparte con flex:1 lo que sobra del alto fijo de .live-screen — acá
+   .live-layout hace lo mismo un nivel más adentro, para que carátula/video
+   y letra se repartan TODO ese alto entre los dos (mitad y mitad en
+   desktop, apilados en mobile), no un 70vh fijo. */
 .live-layout {
   display: flex;
   flex-direction: column;
   gap: var(--gap);
+  flex: 1;
+  min-height: 0;
 }
 
+/* Compite por alto contra .youtube-container en vez de .live-lyrics
+   directo — a propósito: .live-lyrics tiene un padding gigante (ver
+   lyrics.css, es el truco para centrar la primera/última línea al hacer
+   scroll), y un flex item no encoge por debajo de su "contenido natural"
+   salvo que se le fuerce min-height:0 — con ese padding de por medio, ese
+   forcejeo contra align-items:stretch se perdía y terminaba más alto que la
+   columna de la carátula, asomando por detrás de la player-bar. Este
+   wrapper no tiene padding propio, así que no hay nada que forcejear:
+   siempre queda del mismo alto que .youtube-container, y overflow:hidden
+   como respaldo por si algo interno se pasa igual. */
+.live-lyrics-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* El espacio del video (.youtube-container) queda siempre reservado — dos
+   columnas en desktop, tenga o no la versión activa un link de YouTube
+   cargado. */
 @media (min-width: 900px) {
-  .live-layout:not(.live-layout-single) {
+  .live-layout {
     flex-direction: row;
     align-items: stretch;
-    height: 70vh;
   }
 
-  .live-layout:not(.live-layout-single) .youtube-container {
+  .live-layout .youtube-container,
+  .live-layout .live-lyrics-wrap {
     flex: 1 1 50%;
     min-width: 0;
-    aspect-ratio: auto;
-    height: 100%;
-    position: sticky;
-    top: var(--gap);
   }
+}
 
-  .live-layout:not(.live-layout-single) .live-lyrics {
-    flex: 1 1 50%;
-    min-width: 0;
-    height: 100%;
-    max-height: none;
-  }
+/* Alto fijo = viewport completo (100dvh, no 100vh, para no quedar corto en
+   mobile por la barra de direcciones), para que .live-main (flex:1 adentro)
+   sepa exactamente cuánto le sobra a carátula/video + letra después del
+   header y la reserva de la player-bar (.has-player-bar). El scroll de Live
+   pasa a ser el de .live-lyrics nomás, la pantalla en sí no scrollea. */
+.live-screen {
+  height: 100dvh;
+}
+
+.live-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+}
+
+/* Mismo mecanismo que .live-screen/.live-main, para Config: la pantalla
+   mide el viewport completo y el scroll pasa a .config-main (todo el
+   contenido salvo el header) — con eso, header y player-bar (transparentes,
+   ver base.css) nunca tienen contenido "pasando por detrás", porque nada
+   scrollea a nivel página, solo adentro de este contenedor. */
+.config-screen {
+  height: 100dvh;
+}
+
+.config-main {
+  padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .offset-calibrator {

@@ -9,6 +9,10 @@ import { renderLiveView } from "./views/song-live-view.js";
 
 const root = document.getElementById("app");
 
+registerRoute(
+  "/",
+  withAuth(() => navigate("/songs"))
+);
 registerRoute("/login", () => renderLoginView(root));
 registerRoute(
   "/songs",

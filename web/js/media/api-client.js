@@ -30,7 +30,7 @@ export async function requestMediaToken(cancionId, version) {
   return { token: data.token, expiresInSeconds: data.expires_in };
 }
 
-export async function uploadAudioFile(file, cancionId, version) {
+export async function uploadMediaFile(file, cancionId, version, { signal } = {}) {
   const form = new FormData();
   form.append("cancion_id", cancionId);
   form.append("version", version);
@@ -39,6 +39,18 @@ export async function uploadAudioFile(file, cancionId, version) {
   const response = await authorizedFetch("/api/upload", {
     method: "POST",
     body: form,
+    signal,
   });
   return response.json();
+}
+
+// Best-effort: el endpoint es idempotente (404 si no existe), así que el
+// caller no necesita manejar el resultado — se usa para no dejar huérfano en
+// el storage de Plan A el archivo de una versión que se acaba de reemplazar.
+export async function deleteMediaFile(cancionId, version) {
+  try {
+    await authorizedFetch(`/media/${cancionId}/${version}`, { method: "DELETE" });
+  } catch {
+    // Ignorado a propósito — ver comentario arriba.
+  }
 }

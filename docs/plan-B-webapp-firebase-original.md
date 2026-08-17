@@ -1,4 +1,10 @@
-# Plan B — Webapp (GitHub Pages) + Firebase
+# Plan B — Webapp (GitHub Pages) + Firebase (documento de planeación original)
+
+> **Histórico — superseded por [`README.md`](./README.md).** Este documento es la planeación inicial de
+> la sesión Plan B, previa a la implementación. Varias decisiones que acá aparecen como "pendientes" ya
+> están resueltas (SDK directo a Firebase sin capa de API propia, login solo con Google popup, modelo de
+> datos con `secciones` además de `letra`). Se conserva como contexto histórico de por qué se tomaron
+> esas decisiones; para el estado actual del proyecto usar siempre `README.md` y `PENDIENTES.md`.
 
 **Esta sesión corre en otro entorno** (no en SERVER-REZ). Responsable de: frontend, modelo de datos en
 Firestore, autenticación, lógica del reproductor (archivo propio + YouTube embebido), editor de letra

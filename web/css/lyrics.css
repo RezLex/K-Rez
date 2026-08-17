@@ -20,8 +20,52 @@
   outline: 1px solid var(--accent);
 }
 
+.lyrics-text-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
 .lyrics-row input[type="text"] {
   flex: 1;
+  min-width: 0;
+}
+
+/* Divisor visual entre las dos zonas clickeables del input (izquierda =
+   seek al start, derecha = seek al end). */
+.lyrics-text-wrap::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  bottom: 3px;
+  width: 1px;
+  background: var(--border);
+  pointer-events: none;
+}
+
+.lyrics-row input[type="text"]:read-only {
+  cursor: pointer;
+  /* Mismos colores que .lyrics-time-group-start/-end (más abajo, escapado a
+     .lyrics-editor) — la mitad izquierda del texto se funde con el color de
+     start, la derecha con el de end, sin costura entre botones y textbox. */
+  background-image: linear-gradient(
+    to right,
+    rgba(77, 163, 255, 0.12) 50%,
+    rgba(72, 191, 145, 0.12) 50%
+  );
+}
+
+/* Línea en blanco: nada que clickear ni que separar en dos zonas — sin
+   divisor, sin tinte, sin cursor de "clickeable". */
+.lyrics-text-wrap.blank::after {
+  display: none;
+}
+
+.lyrics-text-wrap.blank input[type="text"]:read-only {
+  cursor: default;
+  background-image: none;
 }
 
 .lyrics-time {
@@ -29,6 +73,127 @@
   font-variant-numeric: tabular-nums;
   font-size: 13px;
   padding: 8px 10px;
+}
+
+/* Editor de letra (Config): todos los controles de una fila se ven como
+   parte de un solo textarea — el único borde real de todo el bloque es el
+   de .lyrics-rows; nada dentro tiene borde propio. Escapado a .lyrics-editor
+   para no afectar al editor de secciones, que reusa las mismas clases base
+   (.lyrics-row/.lyrics-rows/.lyrics-time). */
+.lyrics-editor .lyrics-rows {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  padding: 0;
+  gap: 0;
+}
+
+.lyrics-editor {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.lyrics-editor .lyrics-row {
+  gap: 0;
+  padding: 0;
+  min-height: 56px;
+  border-radius: 0;
+  align-items: stretch;
+}
+
+.lyrics-editor .lyrics-row.active {
+  outline: none;
+  background: rgba(77, 163, 255, 0.14);
+}
+
+.lyrics-editor .lyrics-time-group {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+
+/* Cada lado con su propio color — ayuda a distinguir de un vistazo la mitad
+   de inicio de la de fin en cada fila. Start usa el mismo azul que --accent. */
+.lyrics-editor .lyrics-time-group-start {
+  background: rgba(77, 163, 255, 0.12);
+}
+
+.lyrics-editor .lyrics-time-group-end {
+  background: rgba(72, 191, 145, 0.12);
+}
+
+/* visibility (no display:none): las filas en blanco deben ocupar el mismo
+   ancho que las que tienen tiempo marcado, para que los íconos de la derecha
+   (editar/insertar/eliminar) queden alineados en columna entre filas. */
+.lyrics-editor .lyrics-time-group.time-controls-hidden {
+  visibility: hidden;
+}
+
+.lyrics-editor .lyrics-row button,
+.lyrics-editor .lyrics-row input[type="text"] {
+  border: none;
+  border-radius: 0;
+  padding: 2px 4px;
+  margin: 0;
+  background-color: transparent;
+}
+
+/* Botones cuadrados: ancho y alto fijos e iguales (56px = min-height de la
+   fila), en vez de aspect-ratio + stretch — esa combinación no resolvía un
+   ancho estable acá y seguía desbordando la fila en horizontal. */
+.lyrics-editor .lyrics-row button {
+  width: 56px;
+  height: 56px;
+  flex: none;
+}
+
+.lyrics-editor .lyrics-row button:focus,
+.lyrics-editor .lyrics-row input[type="text"]:focus {
+  outline: none;
+}
+
+.lyrics-editor .actions button:focus {
+  outline: none;
+}
+
+/* Selectores con más especificidad que ".lyrics-row input[type=text]"
+   (arriba) para poder pisarle el background-color: transparent — el campo
+   de tiempo necesita distinguirse, con un tono más marcado del color de su
+   propio lado (start/end). */
+.lyrics-editor .lyrics-time-group-start input[type="text"].lyrics-time {
+  background-color: rgba(77, 163, 255, 0.28);
+}
+
+.lyrics-editor .lyrics-time-group-end input[type="text"].lyrics-time {
+  background-color: rgba(72, 191, 145, 0.28);
+}
+
+.lyrics-editor .lyrics-row .lyrics-time {
+  /* Ancho fijo (no min-width): "--:--" y "119.3s" deben ocupar exactamente
+     el mismo espacio, si no, la fila en blanco (o cualquier tiempo más
+     corto) queda más angosta y desalinea todo lo que sigue a la derecha.
+     Alto fijo, igual que los botones cuadrados de al lado. */
+  width: 3.6em;
+  height: 56px;
+  flex: none;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  padding: 2px 0;
+}
+
+.lyrics-editor .lyrics-row button:hover,
+.lyrics-editor .lyrics-row input[type="text"]:read-only:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.lyrics-editor .actions button.ghost:hover {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.lyrics-editor .actions button.primary:hover {
+  filter: brightness(1.1);
 }
 
 .live-sections-chips {
@@ -50,13 +215,27 @@
   border-color: var(--accent);
 }
 
+/* Vive adentro de .live-lyrics-wrap (ver player.css) — ese wrapper, sin
+   padding propio, es el que compite por alto contra .youtube-container;
+   acá adentro .live-lyrics solo tiene que llenarlo (height:100%) y manejar
+   su propio scroll, sin que su padding gigante interfiera en ese forcejeo. */
 .live-lyrics {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 70vh;
+  height: 100%;
   overflow-y: auto;
-  padding: 4px;
+  /* Relleno arriba/abajo ≈ mitad del alto del panel, para que la primera y
+     la última línea también puedan llegar al centro del scroll
+     (block:"center" en attachLyricsPlayback) — sin esto, no hay suficiente
+     contenido antes/después de los extremos como para centrarlos. El panel
+     ya no tiene un alto fijo (lo da el flex de .live-layout), así que esto
+     es una aproximación — de sobra para que el truco funcione.
+     14px de padding horizontal (antes 4px): overflow-y:auto fuerza
+     overflow-x a "auto" también (así lo especifica CSS, aunque acá nunca se
+     pidió scroll horizontal) — sin este margen, el blur del fondo de
+     .live-lyrics-line.active (ver más abajo) se recortaba justo contra el
+     borde del contenedor en vez de desvanecerse. */
+  padding: 40vh 14px;
 }
 
 .live-lyrics-gap {
@@ -68,8 +247,7 @@
   font-size: 1.4rem;
   line-height: 1.4;
   color: var(--text-muted);
-  padding: 4px 8px 4px 18px;
-  border-radius: var(--radius);
+  padding: 4px 8px;
   position: relative;
 }
 
@@ -77,20 +255,46 @@
   cursor: pointer;
 }
 
-.live-lyrics-line.marked::before {
-  content: "●";
-  position: absolute;
-  left: 4px;
-  color: var(--accent);
-  font-size: 0.6em;
-  top: 50%;
-  transform: translateY(-50%);
+/* Sin tiempo configurado: más tenue que una frase marcada pero inactiva —
+   distingue de un vistazo "todavía no tiene tiempo" de "tiene tiempo, no es
+   la que está sonando ahora". */
+.live-lyrics-line:not(.marked) {
+  opacity: 0.5;
 }
 
+/* Degradado izquierda→derecha en vez de un color plano — se desvanece hacia
+   la derecha para que se lea como una marca/banda, no como una caja. El
+   fondo vive en ::before (no en el propio elemento) para poder aplicarle
+   blur sin desenfocar el texto: filter en .live-lyrics-line difuminaría
+   todo, letra incluida. ::before hereda position:relative del padre (acá
+   arriba) para poder posicionarse con inset:0 sobre toda la línea; z-index
+   negativo lo manda detrás del texto — como .live-lyrics-line ya no tiene
+   fondo propio, no hay nada que lo tape (a diferencia de body/html, acá no
+   aplica esa trampa). */
 .live-lyrics-line.active {
   color: var(--text);
   font-weight: 600;
-  background: var(--surface);
+}
+
+.live-lyrics-line.active::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(to right, var(--surface), transparent);
+  filter: blur(2px);
+}
+
+/* Con acento de carátula activo, el fondo de la frase en reproducción usa
+   el color de la canción (el texto no se toca, sigue var(--text)) — sin
+   acento, sigue siendo var(--surface) como siempre. */
+body.has-cover-accent .live-lyrics-line.active::before {
+  background: linear-gradient(to right, rgba(var(--cover-accent), 0.45), transparent);
+}
+
+.live-lyrics-line.live-lyrics-marker {
+  font-style: italic;
+  opacity: 0.8;
 }
 
 @media (min-width: 900px) {

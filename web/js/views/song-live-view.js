@@ -1,46 +1,74 @@
 import { h, mount } from "../utils/dom-helpers.js";
-import { formatTime } from "../utils/time-format.js";
 import { getSong } from "../data/songs-repo.js";
-import { PlayerController } from "../player/player-controller.js";
-import {
-  TOKEN_REFRESH_MS,
-  OTHER_VERSION,
-  isVersionUsable,
-  resolveVersionUrl,
-  bufferColorClass,
-} from "../player/version-resolution.js";
+import { getPlayableUrl } from "../media/media-url.js";
+import { OTHER_VERSION, isVersionUsable, resolveVersionUrl, activeFileUrl } from "../player/version-resolution.js";
+import { getPlayerSession } from "../player/player-session.js";
+import { createPlayerBar } from "../player/player-bar.js";
+import { createMixSlider } from "../player/mix-control.js";
+import * as audioReactiveBg from "../player/audio-reactive-bg.js";
 import { attachLyricsPlayback } from "../lyrics/lyrics-playback.js";
 import { navigate } from "../router.js";
+import { createSongsSidebar, takeAutoplayRequest } from "./songs-sidebar.js";
+import { renderSongHeader } from "./song-header.js";
+import { applyCoverAccent, clearCoverAccent, trackGlowPosition, stopTrackingGlowPosition } from "./cover-accent.js";
 
 const LIVE_BLOCKED_KEY = "k-rez-live-blocked";
+const VERSION_LABEL = { original: "Original", karaoke: "Karaoke" };
+
+// "[algo]" es una marca de sección instrumental/no cantada (ej. "[Inst]"), no
+// una línea de letra real — se acepta tanto pegada en el textarea de Config
+// como tipeada a mano en una fila. "[]" (sin etiqueta) es el estado por
+// defecto: existe como fila real (para poder marcarle tiempo y así apagar el
+// resaltado de la línea anterior) pero no muestra texto en Live.
+function parseMarkerLine(texto) {
+  const match = texto.trim().match(/^\[(.*)\]$/);
+  return match ? match[1].trim() : null;
+}
 
 function renderLyricsPanel(letra, { seekToOriginalTime }) {
   const container = h("div", { class: "live-lyrics" }, []);
   const rowEntries = [];
-  const children = letra.map((line) => {
+  const children = [];
+  for (const line of letra) {
     if (line.texto.trim() === "") {
-      return h("div", { class: "live-lyrics-gap" }, []);
+      children.push(h("div", { class: "live-lyrics-gap" }, []));
+      continue;
+    }
+    const marker = parseMarkerLine(line.texto);
+    if (marker === "") {
+      // Marcador "[]" sin etiqueta: fila real para el resaltado (apaga la
+      // línea anterior apenas empieza el instrumental) pero no ocupa espacio
+      // en Live — a diferencia de una línea en blanco, no se agrega al DOM.
+      rowEntries.push({ row: h("div", {}, []), line });
+      continue;
     }
     const marked = line.timestampSeconds !== null;
+    const classes = ["live-lyrics-line"];
+    if (marked) classes.push("marked");
+    if (marker !== null) classes.push("live-lyrics-marker");
     const row = h(
       "div",
       {
-        class: marked ? "live-lyrics-line marked" : "live-lyrics-line",
+        class: classes.join(" "),
         onclick: () => {
           if (marked) seekToOriginalTime(line.timestampSeconds);
         },
       },
-      [line.texto]
+      [marker !== null ? `[${marker}]` : line.texto]
     );
     rowEntries.push({ row, line });
-    return row;
-  });
+    children.push(row);
+  }
   container.replaceChildren(...children);
   return { element: container, getRowEntries: () => rowEntries };
 }
 
 function renderSectionsChips(secciones, { seekToOriginalTime }) {
-  const container = h("div", { class: "live-sections-chips" }, []);
+  // Sin esto, una canción sin secciones deja el contenedor vacío pero
+  // presente: no ocupa alto propio, pero al seguir siendo un ítem flex de
+  // `.live-main` igual consume el `gap` de la columna, dejando un hueco
+  // fantasma entre el header y la carátula/letra.
+  const container = h("div", { class: secciones.length ? "live-sections-chips" : "live-sections-chips hidden" }, []);
   const rowEntries = secciones.map((section) => {
     const row = h(
       "button",
@@ -72,17 +100,51 @@ export async function renderLiveView(root, songId) {
     return;
   }
 
-  const initialKey = isVersionUsable(song.versiones.original) ? "original" : "karaoke";
+  // getPlayerSession reusa el reproductor existente si el usuario venía de
+  // Config de la misma canción (no corta el audio ni pierde posición) —
+  // solo arranca uno nuevo si es una canción distinta o no había sesión.
+  const session = getPlayerSession(song);
+  const { playerController, mixMode, youtubeContainer, coverArt } = session;
+  // El contenedor es compartido con Config (para no perder el iframe/audio
+  // al navegar) — ahí se lo esconde con "hidden"; acá hay que sacárselo por
+  // si la sesión viene de Config, donde no se veía.
+  youtubeContainer.classList.remove("hidden");
 
-  const youtubeContainer = h("div", { class: "youtube-container" });
-  const playerController = new PlayerController(song, { youtubeContainer });
-  let refreshHandle = null;
+  // Si se abrió desde el botón ▶ del sidebar de canciones, arrancar a
+  // reproducir solo, sin esperar un click más — el "modo" que llevaba el
+  // pedido ya no importa acá: si la sesión venía de otra vista de la MISMA
+  // canción, no tiene sentido recargarla solo para respetarlo.
+  const autoplayMode = takeAutoplayRequest(songId);
+  let autoplayPending = Boolean(autoplayMode);
+
+  function isYoutubeVideoVisible() {
+    const key = playerController.activeVersionKey ?? session.initialKey;
+    return key === "original" && song.versiones.original.tipo === "youtube";
+  }
+
+  function updateCoverArt() {
+    const showCover = Boolean(song.caratulaUrl) && !isYoutubeVideoVisible();
+    coverArt.classList.toggle("hidden", !showCover);
+  }
+
+  if (song.caratulaUrl) {
+    getPlayableUrl(songId, "caratula").then((url) => {
+      coverArt.src = url;
+      updateCoverArt();
+      applyCoverAccent(songId, url);
+      trackGlowPosition(coverArt);
+    });
+  } else {
+    clearCoverAccent(songId);
+  }
+
   const playbackUnsubscribers = [];
 
   function cleanup() {
-    if (refreshHandle) clearInterval(refreshHandle);
     playbackUnsubscribers.forEach((unsubscribe) => unsubscribe());
-    playerController.destroy();
+    playerBar.destroy();
+    mixControl?.destroy();
+    stopTrackingGlowPosition();
   }
 
   const seekToOriginalTime = (originalTime) => {
@@ -95,181 +157,109 @@ export async function renderLiveView(root, songId) {
   const lyricsPanel = renderLyricsPanel(song.letra, { seekToOriginalTime });
   const sectionsChips = renderSectionsChips(song.secciones ?? [], { seekToOriginalTime });
 
-  const playButton = h("button", { class: "primary", disabled: "true" }, ["▶"]);
-  const seekBackButton = h(
-    "button",
-    {
-      class: "ghost seek-step",
-      disabled: "true",
-      onclick: () => playerController.seekTo(Math.max(0, playerController.getCurrentTime() - 1)),
-    },
-    ["−1s"]
-  );
-  const seekForwardButton = h(
-    "button",
-    {
-      class: "ghost seek-step",
-      disabled: "true",
-      onclick: () => playerController.seekTo(playerController.getCurrentTime() + 1),
-    },
-    ["+1s"]
-  );
-  const progressBar = h("input", {
-    type: "range",
-    class: "seek-slider",
-    min: "0",
-    max: "0",
-    step: "0.1",
-    value: "0",
-    disabled: "true",
-  });
-  const timeLabel = h("span", { class: "muted" }, ["0:00 / 0:00"]);
-  const originalBufferFill = h(
-    "div",
-    { class: `seek-buffer-fill ${bufferColorClass("original", song)}` },
-    []
-  );
-  const karaokeBufferFill = h(
-    "div",
-    { class: `seek-buffer-fill ${bufferColorClass("karaoke", song)}` },
-    []
-  );
-  const seekWrapper = h("div", { class: "seek-wrapper" }, [
-    h("div", { class: "seek-buffer-track" }, [originalBufferFill, karaokeBufferFill]),
-    progressBar,
-  ]);
   const statusBox = h("p", { class: "muted" }, ["Cargando reproductor..."]);
-  youtubeContainer.classList.add("hidden");
-  const bodyContainer = h("div", { class: "live-layout" }, [youtubeContainer, lyricsPanel.element]);
+  // El espacio del video queda siempre reservado (mismo layout de dos
+  // columnas en desktop), tenga o no un link de YouTube configurado la
+  // versión activa — así no salta el layout al cambiar entre Original/Karaoke.
+  // lyricsPanel.element va envuelto en .live-lyrics-wrap (sin padding
+  // propio) en vez de competir directo por alto contra .youtube-container:
+  // el padding gigante de .live-lyrics (ver lyrics.css, es el truco para
+  // poder centrar la primera/última línea al hacer scroll) hacía que el
+  // flex de acá lo tratara como "más alto" que su contenido real y terminara
+  // más largo que la columna de la carátula, asomando por detrás del
+  // reproductor. El wrapper, sin ese padding, no tiene ese problema.
+  const bodyContainer = h("div", { class: "live-layout" }, [
+    youtubeContainer,
+    h("div", { class: "live-lyrics-wrap" }, [lyricsPanel.element]),
+  ]);
 
-  let scrubbing = false;
-  progressBar.addEventListener("pointerdown", () => {
-    scrubbing = true;
-  });
-  progressBar.addEventListener("change", () => {
-    playerController.seekTo(Number(progressBar.value));
-    scrubbing = false;
-  });
+  let versionToggleButton = null;
+  let mixControl = null;
+  let middleControl;
 
-  playButton.addEventListener("click", () => {
-    if (!playerController.activeVersionKey) return;
-    if (playButton.textContent === "▶") playerController.play();
-    else playerController.pause();
-  });
-
-  playerController.on("ready", () => {
-    progressBar.max = String(playerController.getDuration() || 0);
-    progressBar.disabled = false;
-    playButton.disabled = false;
-    seekBackButton.disabled = false;
-    seekForwardButton.disabled = false;
-    statusBox.classList.add("hidden");
-  });
-  playerController.on("play", () => {
-    playButton.textContent = "⏸";
-  });
-  playerController.on("pause", () => {
-    playButton.textContent = "▶";
-  });
-  playerController.on("timeupdate", ({ currentTime }) => {
-    if (!scrubbing) progressBar.value = String(currentTime);
-    const duration = playerController.getDuration();
-    progressBar.style.setProperty("--played", `${duration ? (currentTime / duration) * 100 : 0}%`);
-    timeLabel.textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-    originalBufferFill.style.width = `${Math.round(playerController.getBufferedFractionFor("original") * 100)}%`;
-    karaokeBufferFill.style.width = `${Math.round(playerController.getBufferedFractionFor("karaoke") * 100)}%`;
-  });
-
-  function updateBodyLayout() {
-    const activeVersion = song.versiones[playerController.activeVersionKey];
-    const isYoutube = activeVersion?.tipo === "youtube";
-    bodyContainer.classList.toggle("live-layout-single", !isYoutube);
-    youtubeContainer.classList.toggle("hidden", !isYoutube);
+  if (mixMode) {
+    mixControl = createMixSlider(playerController);
+    middleControl = mixControl.element;
+  } else {
+    versionToggleButton = h("button", { class: "ghost", disabled: "true" }, ["—"]);
+    middleControl = versionToggleButton;
   }
 
-  function updatePills() {
-    originalPill.className = playerController.activeVersionKey === "original" ? "primary" : "ghost";
-    originalPill.disabled = !isVersionUsable(song.versiones.original);
-    karaokePill.className = playerController.activeVersionKey === "karaoke" ? "primary" : "ghost";
-    karaokePill.disabled = !isVersionUsable(song.versiones.karaoke);
+  // Un solo botón (en vez de dos pills) que muestra la versión activa y
+  // alterna a la otra — mismo patrón que usa Config. En karaoke se pone azul
+  // (primary) para que el modo activo se note de un vistazo, y el video de
+  // YouTube (si la versión karaoke es de ese tipo) se oculta — el karaoke se
+  // usa para cantar mirando la letra, no el video — pero conserva su espacio
+  // (visibility, no display) para no correr el layout al cambiar de modo.
+  function updateVersionToggleButton() {
+    if (!versionToggleButton) {
+      updateCoverArt();
+      return;
+    }
+    const key = playerController.activeVersionKey;
+    versionToggleButton.textContent = key ? VERSION_LABEL[key] : "—";
+    versionToggleButton.className = key === "karaoke" ? "primary" : "ghost";
+    versionToggleButton.disabled = !key || !isVersionUsable(song.versiones[OTHER_VERSION[key]]);
+    youtubeContainer.classList.toggle("hide-video", !isYoutubeVideoVisible());
+    updateCoverArt();
   }
 
-  async function switchMode(versionKey) {
-    if (playerController.activeVersionKey === versionKey) return;
-    if (!isVersionUsable(song.versiones[versionKey])) return;
-    originalPill.disabled = true;
-    karaokePill.disabled = true;
-    await resolveVersionUrl(playerController, song, versionKey);
-    await playerController.switchTo(versionKey);
-    updatePills();
-    updateBodyLayout();
+  if (versionToggleButton) {
+    versionToggleButton.addEventListener("click", async () => {
+      const targetKey = OTHER_VERSION[playerController.activeVersionKey];
+      if (!isVersionUsable(song.versiones[targetKey])) return;
+      versionToggleButton.disabled = true;
+      await resolveVersionUrl(playerController, song, targetKey);
+      await playerController.switchTo(targetKey);
+      audioReactiveBg.setActiveFileUrl(activeFileUrl(song, targetKey));
+      updateVersionToggleButton();
+    });
   }
 
-  const originalPill = h("button", { class: "ghost", onclick: () => switchMode("original") }, ["Original"]);
-  const karaokePill = h("button", { class: "ghost", onclick: () => switchMode("karaoke") }, ["Karaoke"]);
-
-  mount(
-    root,
-    h("div", {}, [
-      h("div", { class: "screen screen-wide has-player-bar" }, [
-        h("header", { class: "bar" }, [
-          h("div", {}, [
-            h("h1", {}, [song.nombre]),
-            h("p", { class: "muted" }, [`${song.artista}${song.key ? " — " + song.key : ""}`]),
-          ]),
-          h("div", { class: "bar" }, [
-            originalPill,
-            karaokePill,
-            h("button", { class: "ghost", onclick: () => navigate(`/songs/${songId}/config`) }, ["⚙ Configurar"]),
-            h("button", { class: "ghost", onclick: () => navigate("/songs") }, ["Volver"]),
-          ]),
-        ]),
-
-        sectionsChips.element,
-        statusBox,
-
-        bodyContainer,
-      ]),
-      h("div", { class: "player-bar" }, [
-        h("div", { class: "player-bar-inner player-transport" }, [
-          seekBackButton,
-          playButton,
-          seekForwardButton,
-          seekWrapper,
-          timeLabel,
-        ]),
-      ]),
-    ])
-  );
-
-  updatePills();
-  updateBodyLayout();
-
-  try {
-    await resolveVersionUrl(playerController, song, initialKey);
-    await playerController.loadVersion(initialKey);
-    updatePills();
-    updateBodyLayout();
-    playbackUnsubscribers.push(attachLyricsPlayback(playerController, lyricsPanel));
-    playbackUnsubscribers.push(attachLyricsPlayback(playerController, sectionsChips));
-  } catch (err) {
-    statusBox.textContent = "No se pudo cargar el reproductor.";
-    return;
+  function handleReady() {
+    updateVersionToggleButton();
+    if (autoplayPending) {
+      autoplayPending = false;
+      playerController.play();
+    }
   }
 
-  const otherKey = OTHER_VERSION[initialKey];
-  if (isVersionUsable(song.versiones[otherKey])) {
-    resolveVersionUrl(playerController, song, otherKey).then(() =>
-      playerController.preloadVersion(otherKey)
-    );
-  }
+  const sidebar = createSongsSidebar({ getCurrentMode: () => playerController.activeVersionKey });
 
-  refreshHandle = setInterval(async () => {
-    const activeKey = playerController.activeVersionKey;
-    if (song.versiones[activeKey]?.tipo !== "archivo") return;
-    await resolveVersionUrl(playerController, song, activeKey);
-    await playerController.reloadActiveVersion();
-  }, TOKEN_REFRESH_MS);
+  const playerBar = createPlayerBar({
+    playerController,
+    session,
+    song,
+    mixMode,
+    middleControl,
+    statusBox,
+    onReady: handleReady,
+  });
+
+  const screenElement = h("div", { class: "screen screen-wide has-player-bar has-header-bar live-screen" }, [
+    renderSongHeader(songId, song, { mode: "live", canGoLive }),
+
+    h("div", { class: "live-main" }, [sectionsChips.element, statusBox, bodyContainer]),
+  ]);
+
+  mount(root, h("div", {}, [screenElement, playerBar.element, sidebar.element]));
 
   window.addEventListener("hashchange", cleanup, { once: true });
+
+  if (!session.initialKey) return;
+
+  try {
+    await session.loadPromise;
+    // No hace falta llamar updateVersionToggleButton() acá: el "ready" que
+    // dispara la carga (adentro de loadPromise) ya la corrió vía
+    // onReady/handleReady dentro de createPlayerBar.
+    playbackUnsubscribers.push(attachLyricsPlayback(playerController, lyricsPanel));
+    playbackUnsubscribers.push(
+      attachLyricsPlayback(playerController, sectionsChips, {
+        scrollOptions: { block: "nearest", inline: "center" },
+      })
+    );
+  } catch (err) {
+    statusBox.textContent = "No se pudo cargar el reproductor.";
+  }
 }

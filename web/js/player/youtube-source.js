@@ -50,7 +50,7 @@ export class YoutubeSource extends PlayerSource {
           width: "100%",
           height: "100%",
           videoId,
-          playerVars: { playsinline: 1 },
+          playerVars: { playsinline: 1, controls: 0 },
           events: {
             onReady: () => {
               this.#startPolling();

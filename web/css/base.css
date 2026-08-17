@@ -6,26 +6,108 @@
   --text-muted: #9a9ea6;
   --accent: #4da3ff;
   --danger: #ff5c5c;
+  --success: #48bf91;
   --radius: 10px;
   --gap: 12px;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.18);
+  --glass-blur: 20px;
+  --bar-height: 64px;
+  --sidebar-width: min(320px, 85vw);
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* Scrollbars con el mismo lenguaje de cristal que el header/player-bar/
+   sidebar — track transparente, thumb translúcido con borde sutil en vez
+   del gris sólido de antes. backdrop-filter (blur real) no lo soporta
+   ningún navegador en pseudo-elementos de scrollbar, así que el efecto acá
+   se logra solo con color: fondo semitransparente + borde, no blur. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-border) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Con acento de carátula activo, el thumb se tiñe del color de la canción —
+   mismo criterio que el resto de las superficies de cristal (ver
+   body.has-cover-accent más abajo). "* " acá también a propósito, no
+   alcanza con ponerlo solo en body: aunque scrollbar-color se hereda, la
+   regla base de arriba usa "*" — eso le pone un valor DIRECTO (no heredado)
+   a cada elemento, y un valor directo siempre gana sobre uno heredado sin
+   importar la especificidad. Sin este mismo "*" acá, el tinte de acento
+   nunca llegaba a pisarlo. */
+body.has-cover-accent * {
+  scrollbar-color: rgba(var(--cover-accent), 0.45) transparent;
+}
+
+body.has-cover-accent *::-webkit-scrollbar-thumb {
+  background: rgba(var(--cover-accent), 0.35);
+  border-color: rgba(var(--cover-accent), 0.55);
+}
+
+body.has-cover-accent *::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--cover-accent), 0.5);
+}
+
 html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--bg);
   color: var(--text);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 16px;
 }
 
+/* Solo en `html`, no en `body`: un descendiente de `body` con z-index
+   negativo (como body.has-cover-accent::before, más abajo) pinta DESPUÉS del
+   fondo de `html` pero ANTES del propio fondo de `body` (orden de pintado
+   CSS: fondo del elemento que arma el stacking context, después
+   descendientes con z-index negativo, recién después el resto del
+   contenido normal — el fondo de un `body` no posicionado cae en ese
+   "resto"). Con `background` en los dos (como estaba antes), el fondo
+   opaco de `body` tapaba cualquier cosa con z-index:-1 que colgara de él,
+   sin importar su opacidad — el degradado animado nunca se llegó a ver por
+   esto, no por el pulso en sí. */
+html {
+  background: var(--bg);
+}
+
 #app {
   min-height: 100%;
+}
+
+/* Íconos de Lucide (ver web/js/utils/icons.js) — 1em/1em los escala con el
+   font-size del botón/texto que los contiene, como si fueran un caracter
+   más (mismo criterio que los Unicode que reemplazan); vertical-align los
+   centra contra la línea de base del texto que va al lado. flex:none evita
+   que un <svg> dentro de un contenedor flex (.bar, .actions) se achique. */
+.icon {
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.2em;
+  flex: none;
 }
 
 h1,
@@ -34,8 +116,13 @@ h3 {
   margin: 0 0 var(--gap);
 }
 
+/* !important a propósito: .hidden es una utilidad que debe ganar siempre,
+   pero varias clases con display propio (.actions, .lyrics-rows, etc.) están
+   definidas después en la cascada con la misma especificidad (una clase) —
+   sin esto, "display: none" perdía contra "display: flex" por orden de
+   aparición, y el elemento quedaba visible aunque tuviera .hidden. */
 .hidden {
-  display: none;
+  display: none !important;
 }
 
 .muted {
@@ -60,14 +147,213 @@ h3 {
   max-width: 480px;
 }
 
+/* --player-bar-height la fija player-bar.js con un ResizeObserver (mide la
+   barra real) — 88px es solo el fallback antes de la primera medición. */
 .has-player-bar {
-  padding-bottom: 88px;
+  padding-bottom: var(--player-bar-height, 88px);
+}
+
+/* .screen-header es `position: fixed` (ver más abajo) y ya no reserva su
+   propio espacio en el flujo normal — esto le da al contenido de la pantalla
+   el padding-top que le corresponde para arrancar justo debajo, sin hueco ni
+   superposición. A diferencia de --player-bar-height (medido en vivo, esa
+   barra sí puede crecer si el control de mezcla envuelve en pantallas
+   angostas), acá alcanza con la constante: --bar-height es un alto fijo,
+   .screen-header trunca su contenido en vez de envolver (ver título/subtítulo
+   más abajo), así que nunca varía. */
+.has-header-bar {
+  padding-top: var(--bar-height);
+}
+
+/* Fondo ambiental con el color dominante de la carátula (ver
+   web/js/views/cover-accent.js). --glow-x/--glow-y son el centro real de la
+   carátula en pantalla (% del viewport, medido en vivo con
+   getBoundingClientRect — ver trackGlowPosition en cover-accent.js), no un
+   punto fijo: así el degradado nace visualmente "desde" la carátula en vez
+   de desde una esquina arbitraria. 50%/50% (centro de pantalla) es el
+   fallback antes de la primera medición o si no hay ninguna carátula
+   visible que trackear. --cover-accent son 3 componentes "r, g, b" (sin
+   rgb() alrededor) para poder armar la rgba() acá con la opacidad que haga
+   falta. Sin la clase (no hay carátula, o no se pudo leer el color), la
+   página se ve exactamente igual que siempre: solo var(--bg) de `body`
+   (html,body más arriba), sin este pseudo-elemento.
+   Es un `::before` con `position: fixed` propio (no el `background` de
+   `body` directo) para poder animarlo (transform/opacity) sin pelearle al
+   fondo sólido real de `body`, que se queda de base por si esto no carga.
+   z-index:-1 lo manda detrás de todo el contenido normal — mismo mecanismo
+   que .screen-header/.player-bar, que van adelante con z-index positivo.
+   --audio-level (0..1) la escribe audio-reactive-bg.js cuadro a cuadro, con
+   un rAF propio (no @keyframes de CSS): combina una onda "idle" de baja
+   amplitud que corre siempre — para que el fondo nunca se vea estático,
+   tenga o no música sonando — con el nivel real de graves de lo que está
+   sonando cuando puede leerlo (versión de archivo, no YouTube). El rango de
+   opacity/scale es grande a propósito: con valores más sutiles el pulso
+   quedaba invisible a simple vista contra el resto del contenido de la
+   pantalla (carátula, letra, etc.) compitiendo por atención. */
+body.has-cover-accent::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  /* "circle", no "ellipse" (el default): ellipse escala el radio horizontal
+     y vertical por separado según la distancia a cada borde, así que en una
+     ventana ancha (o angosta) el brillo salía ovalado — circle usa un único
+     radio real (distancia euclídea a la esquina más lejana), redondo sin
+     importar el aspect ratio de la ventana. */
+  background: radial-gradient(
+    circle farthest-corner at var(--glow-x, 50%) var(--glow-y, 50%),
+    rgba(var(--cover-accent), 0.85),
+    transparent 58%
+  );
+  opacity: calc(0.35 + var(--audio-level, 0) * 0.65);
+  transform: scale(calc(1 + var(--audio-level, 0) * 0.3));
+  transform-origin: var(--glow-x, 50%) var(--glow-y, 50%);
+}
+
+/* Con acento activo, los elementos "primary" del header y el reproductor
+   (botón de play, thumb/relleno de los sliders, segmento activo de mezcla)
+   usan el color de la carátula en vez del --accent fijo de la app — alcanza
+   con pisar la variable acá, ninguna regla que ya usa var(--accent) necesita
+   tocarse. Misma familia de superficies de cristal que .screen-header/
+   .player-bar: la pestaña y el panel del sidebar de canciones (ver
+   components.css) usan las mismas --glass-* ya tintadas. */
+body.has-cover-accent .screen-header,
+body.has-cover-accent .player-bar,
+body.has-cover-accent .songs-sidebar,
+body.has-cover-accent .songs-sidebar-tab {
+  --accent: rgb(var(--cover-accent));
+  --glass-bg: rgba(var(--cover-accent), 0.16);
+  --glass-border: rgba(var(--cover-accent), 0.4);
+  --glass-highlight: rgba(var(--cover-accent), 0.35);
+  
+}
+
+/* Brillo sutil en los controles "primary" cuando hay acento de carátula —
+   sin acento no hay glow (el color fijo --accent no amerita el efecto). */
+body.has-cover-accent .player-bar button.primary,
+body.has-cover-accent .player-bar .mix-segment.active {
+  box-shadow: 0 0 18px rgba(var(--cover-accent), 0.55);
+}
+
+/* Botones "ghost" del header, el reproductor y el sidebar de canciones como
+   chips de cristal en vez del panel sólido (var(--surface)) que usan en el
+   resto de la app — ahí sí hace falta opacidad para legibilidad sobre
+   fondos variados, acá flotan sobre una superficie ya blureada. */
+.screen-header button.ghost,
+.player-bar button.ghost,
+.songs-sidebar button.ghost {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--glass-border);
+}
+
+.screen-header button.ghost:hover,
+.player-bar button.ghost:hover,
+.songs-sidebar button.ghost:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* Fixed y edge-to-edge (como .player-bar en player.css), no "sticky" adentro
+   de `.screen`: así ocupa todo el ancho de la ventana sin heredar el
+   max-width/padding de `.screen`/`.screen-wide`, en vez de quedar angosto y
+   centrado como el resto del contenido. Al sacarlo del flujo normal, el
+   padding horizontal hay que dárselo acá directamente (ya no lo hereda de
+   `.screen`), y la pantalla necesita reservar su alto real como padding-top
+   (`.has-header-bar` más arriba) para que el contenido arranque pegado
+   contra su borde, sin hueco ni superposición. Sin border-radius a
+   propósito: al ir de punta a punta, un borde recto se funde con el
+   contenido de abajo en vez de flotar como tarjeta separada.
+   min-height: var(--bar-height) en vez de padding vertical — mismo alto que
+   .player-bar (mismo token), con el título/subtítulo truncados (ver abajo)
+   en vez de envolver, para que las dos barras midan siempre lo mismo. El
+   flex-wrap: nowrap que evita esa segunda línea vive en la regla
+   `.screen-header.bar` de más abajo, no acá: `.bar` (components.css, carga
+   después de este archivo) trae `flex-wrap: wrap` con la misma
+   especificidad (una clase) — puesto acá perdía por orden de cascada. */
+/* SIN backdrop-filter, a diferencia de .player-bar/.songs-sidebar —
+   confirmado a mano (DevTools, sacando la propiedad en vivo con el glitch
+   pasando) que el bug de flicker de Chrome documentado arriba (--glass-blur)
+   es él específicamente acá: con el blur puesto, este header se cortaba/
+   parpadeaba al reproducir aunque .player-bar tiene exactamente el mismo
+   backdrop-filter y nunca lo hizo — sin blur, desaparece por completo.
+   var(--glass-bg) sin blur atrás (confirmado a mano también) se sigue
+   viendo bien — translúcido de verdad, no necesita un fondo más opaco para
+   compensar nada. */
+.screen-header {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 15;
+  min-height: var(--bar-height);
+  display: flex;
+  align-items: center;
+  background: var(--glass-bg);
+  padding-top: 100px;
+  backdrop-filter: blur(20px) saturate(160%);
+  border-bottom: 2px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 -8px 24px rgba(0, 0, 0, 0.25);
+  padding: 0 var(--gap);
+  /* Mismo motivo que .screen-header en base.css: mitigación documentada del
+     bug de flicker de backdrop-filter en Chrome — aísla el blur en su
+     propia capa de composición. */
+  will-change: transform;
+}
+
+/* `.screen-header.bar` (dos clases) le gana en especificidad a `.bar` sola
+   (components.css) — sin esto, title/actions podían saltar a una segunda
+   línea si no entraban en una fila (el wrap default de `.bar`) en vez de que
+   el título trunque, rompiendo el alto fijo de arriba. Con el título
+   truncando (ellipsis) y las acciones sin encoger, nunca hace falta esa
+   segunda línea. */
+.screen-header.bar {
+  flex-wrap: nowrap;
+}
+
+/* Envoltorio de título/subtítulo — min-width:0 es lo que le permite a
+   .screen-header h1 encogerse por debajo de su ancho de contenido y truncar
+   en vez de empujar a .actions fuera de la barra (default de un flex item es
+   min-width:auto, que ignora cualquier overflow/text-overflow). */
+.screen-header-title {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.screen-header h1 {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.screen-header p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nunca encoge: si el título se achica (arriba), las acciones (2 botones
+   ícono) siempre entran enteras en la misma fila. */
+.screen-header .actions {
+  flex: none;
 }
 
 @media (min-width: 900px) {
   .screen-wide {
     max-width: none;
     width: 100%;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .screen-header {
     padding-left: 24px;
     padding-right: 24px;
   }

@@ -34,9 +34,10 @@ propia Fase 2) — no bloquea seguir desarrollando, sí bloquea la publicación 
 
 ## Fase 5 — Publicación (pendiente de este lado)
 
-- **El repo nunca se pusheó a GitHub** — cero commits al momento de escribir esto (confirmado con
-  `git log`). El workflow de `.github/workflows/deploy-pages.yml` existe pero nunca corrió.
-- GitHub Pages no está activado (Settings → Pages → Source: GitHub Actions, pendiente).
+- **Repo ya pusheado a GitHub** (`github.com/RezLex/K-Rez`, commit `713022e` en `main`) — esto ya no es
+  un bloqueante. Pendiente de confirmar (no verificable desde este lado): si GitHub Pages está activado
+  (Settings → Pages → Source: GitHub Actions) y si el workflow `.github/workflows/deploy-pages.yml` ya
+  corrió al menos una vez.
 - Una vez publicado, hay que:
   - Confirmar el dominio final de GitHub Pages y pedirle a Plan A que habilite CORS para ese origen
     (hoy solo está confirmado `http://localhost:5500`).
@@ -59,6 +60,9 @@ propia Fase 2) — no bloquea seguir desarrollando, sí bloquea la publicación 
 - Prueba end-to-end completa en un navegador que no sea Edge/Chromium (Safari, Firefox) — el proyecto
   usa import maps, `accent-color`/pseudo-elementos de `<input type="range">`, y `aspect-ratio`, que
   deberían tener buen soporte pero no se probaron fuera de Chromium.
+- El fondo reactivo al audio (`audio-reactive-bg.js`, Web Audio API + `AnalyserNode`) solo se probó en
+  Chromium — no se confirmó que el patrón de `AudioContext`/gesto de usuario/`GainNode` en 0 (ver sección
+  10 del README) se comporte igual en Firefox/Safari.
 - Prueba de la vista Live específicamente en mobile (el layout de dos columnas es desktop-first; el
   fallback a una columna en mobile no se validó en un dispositivo real, solo se infiere del CSS).
 
@@ -76,3 +80,13 @@ propia Fase 2) — no bloquea seguir desarrollando, sí bloquea la publicación 
 - `web/css/remote.css` existe vacío, reservado para Fase 4.
 - Decisión tomada pero no revisada con datos reales: usar `signInWithPopup` en vez de
   `signInWithRedirect` en producción — ver la sección de QA de arriba.
+- **`.screen-header` no tiene `backdrop-filter`** (a diferencia de la player-bar y el sidebar) por un bug
+  de renderizado de Chrome confirmado a mano (ver sección 10 del README, "Bug conocido de Chrome"). Si
+  Chrome termina de shippear el fix propuesto (mirror edgeMode) en el
+  [issue 41471914](https://issues.chromium.org/issues/41471914), vale la pena reintentar el blur ahí para
+  que las tres superficies vuelvan a ser 100% iguales.
+- El fondo reactivo al audio necesita que el streaming de Plan A mande headers CORS para el origin real
+  del audio "fantasma" (`audio-reactive-bg.js`) — confirmado hoy para `localhost:5500` y IPs de red local,
+  no para el dominio de producción (mismo tema que el bloqueante de "Mixed content / HTTPS" de arriba). Si
+  el CORS no cubre el origin real, el fondo simplemente no reacciona a la música (cae al pulso idle), no
+  rompe nada — pero vale la pena confirmar una vez publicado.

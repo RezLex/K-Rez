@@ -16,6 +16,29 @@ button {
   color: var(--text);
 }
 
+/* Botón nativo de "Elegir archivo" restyleado como un botón ghost — el
+   chrome default del navegador (gris, con su propia tipografía) desentona
+   fuerte contra el resto de los controles planos del tema oscuro. */
+input[type="file"] {
+  font-size: 14px;
+  padding: 8px 10px;
+}
+
+input[type="file"]::file-selector-button {
+  font-size: 14px;
+  padding: 8px 12px;
+  margin-right: 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 textarea {
   font-family: inherit;
   resize: vertical;
@@ -48,12 +71,120 @@ button.danger {
   color: var(--danger);
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.status-pill--loaded {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.status-pill--locked {
+  border-style: dashed;
+}
+
+.cover-frame {
+  width: 96px;
+  aspect-ratio: 1 / 1;
+  flex: none;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cover-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-frame-placeholder {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+  padding: 4px;
+}
+
+.file-slot {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+
+.file-slot-dropzone {
+  border-style: dashed;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 44px;
+  padding: 16px 10px;
+}
+
+.file-slot-dropzone.drag-over {
+  border-color: var(--accent);
+  background: rgba(77, 163, 255, 0.08);
+}
+
+.file-slot-current {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-slot-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-slot-actions {
+  display: flex;
+  flex: none;
+  gap: 8px;
+}
+
 .bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: var(--gap);
+}
+
+/* h1 trae margin-bottom: var(--gap) por default (base.css) — asimétrico
+   (0 arriba, var(--gap) abajo). align-items:center centra la caja completa
+   *incluyendo* ese margen, así que el texto del título quedaba visualmente
+   más arriba que los botones de al lado (cuyo margen sí es simétrico/cero).
+   Solo aplica cuando el h1 es hijo directo de .bar (sin línea de artista
+   debajo, como en Config o en la lista de canciones) — donde el h1 comparte
+   fila con .actions, no cuando tiene más texto debajo (Live) que sí necesita
+   ese espaciado. */
+.bar > h1 {
+  margin: 0;
 }
 
 .actions {
@@ -89,4 +220,135 @@ button.danger {
   border: none;
   padding: 12px 0;
   color: var(--text);
+}
+
+/* z-index 10, por debajo de .screen-header (15) y .player-bar (20) a
+   propósito: las dos barras tienen que quedar siempre visibles por encima
+   del sidebar, no tapadas por él cuando está abierto.
+   top/bottom: var(--bar-height) (no inset:0) por el mismo motivo que
+   .songs-sidebar (arriba): el header y la player-bar son vidrio
+   translúcido (backdrop-filter), así que un overlay oscuro por detrás se
+   les filtra igual aunque el z-index ya las deje "por encima" — dejando
+   ese oscurecido fuera de esas dos franjas, quedan siempre con su brillo
+   normal al abrir el sidebar. */
+.songs-sidebar-backdrop {
+  position: fixed;
+  top: var(--bar-height);
+  left: 0;
+  right: 0;
+  bottom: var(--bar-height);
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10;
+}
+
+/* Siempre en el DOM (ya no se oculta con .hidden/display:none, que no se
+   puede animar) — translateX(-100%) la saca de la pantalla por su propio
+   ancho exacto, sea cual sea (min(320px, 85vw) es responsivo). .open la
+   trae a la vista con transition. Mismo cristal que .screen-header/
+   .player-bar (glass-bg/blur/border/highlight, con el mismo tinte de
+   acento cuando hay carátula — ver body.has-cover-accent en base.css) en
+   vez del panel sólido que tenía antes.
+   top/bottom: var(--bar-height) (no 0) — el panel ocupa exactamente el
+   espacio entre el header y la player-bar, ni un pixel más, en vez de ir de
+   punta a punta de la pantalla y competir por espacio con esas dos barras
+   (z-index aparte, ver más abajo): así ningún contenido importante del
+   sidebar (el título "Canciones", la ✕, la última canción de la lista)
+   queda tapado por ellas. */
+.songs-sidebar {
+  position: fixed;
+  top: var(--bar-height);
+  left: 0;
+  bottom: var(--bar-height);
+  width: var(--sidebar-width);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: inset -1px 0 0 var(--glass-highlight), 8px 0 24px rgba(0, 0, 0, 0.25);
+  z-index: 11;
+  overflow-y: auto;
+  padding: var(--gap);
+  /* Mismo motivo que .screen-header/.player-bar: mitigación documentada del
+     bug de flicker de backdrop-filter en Chrome — capa de composición
+     propia. transform ya está en la lista (la usa translateX para
+     abrir/cerrar), así que will-change lo agrupa con eso. */
+  will-change: transform;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  transform: translateX(-100%);
+  transition: transform 220ms ease;
+}
+
+.songs-sidebar.open {
+  transform: translateX(0);
+}
+
+/* Pestaña fija al borde izquierdo (ver songs-sidebar.js) — reemplaza al
+   botón ☰ que antes vivía en la player-bar. z-index por encima del panel
+   (11) y del backdrop (10) para quedar siempre clickeable, incluso pegada
+   al borde del panel abierto — pero igual por debajo de .screen-header (15)
+   y .player-bar (20), mismo criterio que el resto del sidebar. Mismo
+   --sidebar-width y misma duración de transición que .songs-sidebar: al
+   abrir/cerrar, las dos se mueven juntas y se leen como una sola pieza (la
+   pestaña es la manija del panel), no como dos controles independientes.
+   Con backdrop-filter de nuevo: el bug de flicker de Chrome (--glass-blur,
+   ver base.css) era específicamente de .screen-header, confirmado a mano —
+   esta pestaña nunca fue la causa. */
+.songs-sidebar-tab {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  z-index: 12;
+  width: 36px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-left: none;
+  border-radius: 0 var(--radius) var(--radius) 0;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 4px 0 16px rgba(0, 0, 0, 0.25);
+  color: var(--text);
+  transform: translateY(-50%) translateX(0);
+  transition: transform 220ms ease;
+}
+
+.songs-sidebar-tab.open {
+  transform: translateY(-50%) translateX(var(--sidebar-width));
+}
+
+.songs-sidebar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.songs-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 4px;
+}
+
+.songs-sidebar-play {
+  flex: none;
+}
+
+.songs-sidebar-link {
+  flex: 1;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 8px 4px;
 }

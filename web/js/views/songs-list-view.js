@@ -8,8 +8,8 @@ export async function renderSongsListView(root, user) {
 
   mount(
     root,
-    h("div", { class: "screen" }, [
-      h("header", { class: "bar" }, [
+    h("div", { class: "screen has-header-bar" }, [
+      h("header", { class: "bar screen-header" }, [
         h("h1", {}, ["Mis canciones"]),
         h("button", { class: "ghost", onclick: () => signOutUser() }, ["Salir"]),
       ]),
