@@ -18,6 +18,28 @@ Estado al 2026-08-17. Ver [`README.md`](./README.md) para contexto de arquitectu
 - **CORS del origen de GitHub Pages:** depende de que Plan A confirme que `CORS_ALLOWED_ORIGINS` ya lo
   incluye (no verificado todavía).
 
+## Custom domain para GitHub Pages (sin decidir, opcional)
+
+Se intentó una vez con el apex `rez-lex.com` desde el campo "Custom domain" de Settings → Pages
+(commits `Create CNAME` / `Delete CNAME`, 2026-08-17) — no funcionó porque GitHub escribió el archivo
+`CNAME` en la **raíz del repo**, y el workflow (`deploy-pages.yml`) solo sube `path: web` como artifact,
+así que ese archivo nunca llegó al sitio publicado. Lección: no usar ese campo de la UI directo; el
+`CNAME` tiene que vivir en `web/CNAME` para quedar dentro del artifact.
+
+Pendiente, una vez que se elija el hostname (sugerido: subdominio tipo `k-rez.rez-lex.com` o
+`app.rez-lex.com`, en línea con `k-api.rez-lex.com` del backend — evitar el apex, que requiere A/AAAA
+records en vez de un CNAME simple):
+
+1. Agregar `web/CNAME` al repo con el hostname elegido (una sola línea).
+2. Configurar el registro DNS en Cloudflare (lado de Plan A, ver `pendientes-plan-a.md`): `CNAME` del
+   subdominio → `rezlex.github.io`, en modo **DNS only** (nube gris) al menos hasta que GitHub emita el
+   certificado — proxied desde el principio rompe la validación de Let's Encrypt.
+3. Recién ahí completar Settings → Pages → Custom domain con ese hostname, esperar la verificación +
+   certificado (minutos a ~24h), y activar **Enforce HTTPS**.
+4. Agregar el nuevo dominio a **Authorized domains** de Firebase Auth (además de o en vez de
+   `rezlex.github.io`).
+5. Pedirle a Plan A que agregue el nuevo origin a `CORS_ALLOWED_ORIGINS`.
+
 ## Mixed content / HTTPS — ✅ resuelto (2026-08-17)
 
 `MEDIA_BASE_URL` en `web/js/media/api-client.js` ya apunta a `https://k-api.rez-lex.com` (Cloudflare

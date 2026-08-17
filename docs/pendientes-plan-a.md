@@ -39,6 +39,14 @@ delante de rutas que un humano visita directo (ninguna existe hoy en este backen
 para las llamadas `fetch()`, o (c) dejar Access afuera de este hostname y confiar en el
 idToken/media-token de Firebase como gate. **No activar Access a ciegas** sobre este hostname.
 
+## Custom domain para GitHub Pages (sin decidir, opcional)
+
+Ver el detalle completo en `pendientes-plan-b.md` — resumen del lado de Plan A: una vez que se elija el
+hostname (sugerido `k-rez.rez-lex.com` o similar, evitando el apex `rez-lex.com`), falta un registro
+`CNAME` en Cloudflare → `rezlex.github.io`, en modo **DNS only** (nube gris) al menos hasta que GitHub
+termine de emitir el certificado Let's Encrypt — si queda proxied desde el arranque, la validación
+falla. Después de eso, agregar el nuevo origin a `CORS_ALLOWED_ORIGINS`.
+
 ## CORS pendiente
 
 - Confirmar que `CORS_ALLOWED_ORIGINS` (env var leída en `app/main.py:_allowed_origins()`) incluye el
