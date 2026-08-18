@@ -1,5 +1,5 @@
 import { h, mount } from "../utils/dom-helpers.js";
-import { getSong, updateVersion, updateSongMeta } from "../data/songs-repo.js";
+import { getSong, updateVersion, updateSongMeta, deleteSong } from "../data/songs-repo.js";
 import { uploadMediaFile, deleteMediaFile } from "../media/api-client.js";
 import { getPlayableUrl } from "../media/media-url.js";
 import {
@@ -358,6 +358,20 @@ export async function renderSongConfigView(root, songId) {
       h("button", { class: "ghost", onclick: () => navigate(`/songs/${songId}/edit`) }, [
         "Editar datos de la canción",
       ]),
+
+      h("h2", {}, ["Zona de peligro"]),
+      h(
+        "button",
+        {
+          class: "ghost danger",
+          onclick: async () => {
+            if (!confirm(`¿Eliminar "${song.nombre}"? Esta acción no se puede deshacer.`)) return;
+            await deleteSong(songId);
+            navigate("/songs");
+          },
+        },
+        ["Eliminar canción"]
+      ),
     ]),
   ]);
 

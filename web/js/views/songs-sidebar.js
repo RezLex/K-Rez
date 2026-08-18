@@ -6,6 +6,14 @@ import { icon } from "../utils/icons.js";
 
 const AUTOPLAY_KEY = "k-rez-autoplay-request";
 
+// Guarda un pedido de autoplay para songId (y opcionalmente el modo
+// original/karaoke que estaba sonando) — lo consume takeAutoplayRequest() al
+// entrar a Live. Compartido entre el botón ▶ de este sidebar y las cards de
+// /songs, que disparan el mismo autoplay al abrir una canción.
+export function requestAutoplay(songId, mode) {
+  sessionStorage.setItem(AUTOPLAY_KEY, JSON.stringify({ songId, mode }));
+}
+
 // Se llama una sola vez al abrir Live: si hay un pedido de autoplay
 // guardado (desde el botón ▶ de un item del sidebar) y es para esta misma
 // canción, devuelve el modo (original/karaoke) con el que había que abrirla.
@@ -71,10 +79,7 @@ export function createSongsSidebar({ getCurrentMode }) {
               class: "ghost songs-sidebar-play",
               title: "Reproducir",
               onclick: () => {
-                sessionStorage.setItem(
-                  AUTOPLAY_KEY,
-                  JSON.stringify({ songId: song.id, mode: getCurrentMode() })
-                );
+                requestAutoplay(song.id, getCurrentMode());
                 close();
                 navigate(`/songs/${song.id}`);
               },
