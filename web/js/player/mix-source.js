@@ -5,7 +5,17 @@ import { FileAudioSource } from "./file-audio-source.js";
 // contra la instrumental (que actúa de reloj). No hace falta Web Audio API
 // para esto — dos <audio> nativos con corrección periódica alcanza para una
 // canción de unos pocos minutos.
-const DRIFT_THRESHOLD_SECONDS = 0.15;
+//
+// La corrección tiene dos niveles: un desvío chico (SOFT) es normal —
+// clocks de decodificación levemente distintos, más marcado en navegadores
+// móviles — y se corrige de a poco pisando el playbackRate de las voces
+// unos puntos por encima/debajo de 1 hasta que vuelve a alinearse; eso es
+// inaudible. Un seekTo() duro (HARD) sí se nota como un corte/glitch en la
+// voz, sobre todo en mobile, así que se reserva para desvíos grandes que
+// indican un stall real (p.ej. rebuffering), no drift normal de reloj.
+const SOFT_DRIFT_THRESHOLD_SECONDS = 0.05;
+const HARD_DRIFT_THRESHOLD_SECONDS = 0.75;
+const CORRECTION_RATE_OFFSET = 0.03;
 
 // Mezcla dos stems complementarios (instrumental + voces) que juntos
 // reconstruyen el original — no es un crossfade entre dos tomas del mismo
@@ -30,8 +40,19 @@ export class MixSource extends PlayerSource {
 
   #correctDrift(instrumentalTime) {
     const vocalsTime = this.#vocals.getCurrentTime();
-    if (Math.abs(vocalsTime - instrumentalTime) > DRIFT_THRESHOLD_SECONDS) {
+    const drift = vocalsTime - instrumentalTime;
+    const absDrift = Math.abs(drift);
+
+    if (absDrift > HARD_DRIFT_THRESHOLD_SECONDS) {
       this.#vocals.seekTo(instrumentalTime);
+      this.#vocals.setPlaybackRate(1);
+      return;
+    }
+
+    if (absDrift > SOFT_DRIFT_THRESHOLD_SECONDS) {
+      this.#vocals.setPlaybackRate(drift > 0 ? 1 - CORRECTION_RATE_OFFSET : 1 + CORRECTION_RATE_OFFSET);
+    } else {
+      this.#vocals.setPlaybackRate(1);
     }
   }
 
@@ -85,6 +106,11 @@ export class MixSource extends PlayerSource {
   seekTo(seconds) {
     this.#instrumental.seekTo(seconds);
     this.#vocals.seekTo(seconds);
+    // Después de un seek manual las dos pistas quedan alineadas — si había
+    // una corrección SOFT en curso (playbackRate != 1), pisarla acá evita
+    // que la voz arranque de nuevo a velocidad distinta desde la posición
+    // recién elegida.
+    this.#vocals.setPlaybackRate(1);
   }
 
   getCurrentTime() {

@@ -53,6 +53,10 @@ export class FileAudioSource extends PlayerSource {
     this.#audio.volume = Math.min(1, Math.max(0, fraction));
   }
 
+  setPlaybackRate(rate) {
+    this.#audio.playbackRate = rate;
+  }
+
   destroy() {
     this.#audio.pause();
     this.#audio.removeAttribute("src");

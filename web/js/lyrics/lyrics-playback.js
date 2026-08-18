@@ -1,3 +1,14 @@
+// Corrige un delay percibido entre el audio y el resaltado en Live: sin
+// esto la línea se marca justo cuando debería, pero se siente tarde. Adelanta
+// el tiempo usado para decidir qué línea está activa, no el audio en sí.
+const LYRICS_LEAD_SECONDS = 0.15;
+
+// El scroll usa un adelanto propio, mayor al del resaltado: así el
+// scrollIntoView (que es una animación "smooth", no instantánea) ya viene
+// moviéndose cuando la frase se marca, en vez de arrancar recién en ese
+// momento y notarse siempre atrás. 100ms de margen sobre el resaltado.
+const SCROLL_LEAD_SECONDS = LYRICS_LEAD_SECONDS + 0.1;
+
 export function attachLyricsPlayback(
   playerController,
   lyricsEditor,
@@ -29,6 +40,22 @@ export function attachLyricsPlayback(
     return next;
   }
 
+  // Qué entradas están "activas" al tiempo dado, y cuál de ellas es la
+  // primaria (la de timestamp más reciente). Se llama dos veces por tick,
+  // una vez por cada tiempo adelantado (resaltado y scroll, por separado).
+  function computeActive(atTime, entries) {
+    let primary = null;
+    const active = [];
+    for (const entry of entries) {
+      const { timestampSeconds } = entry.line;
+      if (timestampSeconds > atTime) continue;
+      if (atTime >= effectiveEnd(entry, entries)) continue;
+      active.push(entry);
+      if (!primary || timestampSeconds > primary.line.timestampSeconds) primary = entry;
+    }
+    return { active, primary };
+  }
+
   return playerController.on("timeupdate", ({ currentTime }) => {
     const originalTime = playerController.convertBetweenVersions(
       currentTime,
@@ -38,17 +65,8 @@ export function attachLyricsPlayback(
 
     const entries = lyricsEditor.getRowEntries().filter((entry) => entry.line.timestampSeconds !== null);
 
-    let nextPrimaryEntry = null;
-    const nextActiveEntries = [];
-    for (const entry of entries) {
-      const { timestampSeconds } = entry.line;
-      if (timestampSeconds > originalTime) continue;
-      if (originalTime >= effectiveEnd(entry, entries)) continue;
-      nextActiveEntries.push(entry);
-      if (!nextPrimaryEntry || timestampSeconds > nextPrimaryEntry.line.timestampSeconds) {
-        nextPrimaryEntry = entry;
-      }
-    }
+    const { active: nextActiveEntries } = computeActive(originalTime + LYRICS_LEAD_SECONDS, entries);
+    const { primary: nextPrimaryEntry } = computeActive(originalTime + SCROLL_LEAD_SECONDS, entries);
 
     const nextActiveRows = new Set(nextActiveEntries.map((entry) => entry.row));
     for (const row of activeRows) {
