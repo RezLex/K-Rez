@@ -526,13 +526,19 @@ outline) — reemplazan a los caracteres Unicode sueltos que se usaban antes (�
   viejos (o Safari &lt;16) no lo van a mostrar. Concepto del glifo: **4 fragmentos de vidrio separados
   por 4 cortes rectos** (`stroke-linecap="butt"`) que nacen de un punto de impacto central, inclinados
   (`skewX`) — es el espacio *entre* los fragmentos, no un agujero recortado en una sola placa, lo que
-  dibuja la K. Cada fragmento es su propio `<rect fill="url(#tileGrad)">` recortado a una cuña angular
-  propia (`wedgeClip1`–`4`, un `<clipPath>` por fragmento); los 4 cubren el tile completo sin superponerse,
-  separados por un margen real (offset perpendicular a cada corte) en vez de tocarse. Los 4 cortes
-  quedan contenidos bien adentro del tile (nunca tocan `tileClip`, que solo redondea las esquinas de la
-  placa): que un trazo con blur cruce ese clip lo corta a mitad de camino en vez de dejarlo apagarse
-  solo, así que ningún elemento depende de él para su terminación visual — las 4 puntas terminan en los
-  mismos puntos que los destellos de punta. Cada filo (el borde de un fragmento que da hacia la
+  dibuja la K. Cada fragmento es su propio `<rect>` recortado a una cuña angular propia (`wedgeClip1`–`4`,
+  un `<clipPath>` por fragmento) y con su propio gradiente (`tileGrad1`–`4`/`...F`, un tinte apenas
+  distinto por fragmento — todos con el mismo gradiente se leía como una sola placa con líneas encima,
+  no 4 objetos); los 4 cubren el tile completo sin superponerse, separados por un margen real (offset
+  perpendicular 6 a cada corte) en vez de tocarse — ese recorte real llega hasta 300 unidades más allá
+  del tile (se trunca con `tileClip`), mucho más lejos de donde el bisel/sombra decorativos se apagan,
+  para que la separación siga siendo real aunque el brillo ya no llegue. El bisel/sombra sí quedan
+  contenidos bien adentro del tile (nunca tocan `tileClip`, que solo redondea las esquinas de la placa):
+  que un trazo con blur cruce ese clip lo corta a mitad de camino en vez de dejarlo apagarse solo, así
+  que ningún elemento depende de él para su terminación visual — llegan hasta el 92% del largo de cada
+  corte (dejar solo un 85% hacía que la última porción se viera sin bisel, como si los fragmentos se
+  reconectaran ahí), terminando en los mismos puntos que los destellos de punta. Cada filo (el borde de
+  un fragmento que da hacia la
   hendidura) lleva dos capas: una sombra de canto oscura y blureada un poco más adentro (sugiere que el
   corte tiene espesor y ese lado está en penumbra) y, encima, el bisel "esmerilado" (halo blureado +
   trazo nítido) — mismo tratamiento en el borde exterior de la placa. En el punto de impacto, donde

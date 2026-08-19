@@ -1,8 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 100">
   <defs>
-    <linearGradient id="tileGradF" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1a1c20"/>
-      <stop offset="1" stop-color="#0b0c0e"/>
+    <linearGradient id="tileGrad1F" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2126"/>
+      <stop offset="1" stop-color="#0c0d10"/>
+    </linearGradient>
+    <linearGradient id="tileGrad2F" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#181a1e"/>
+      <stop offset="1" stop-color="#08090b"/>
+    </linearGradient>
+    <linearGradient id="tileGrad3F" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22252a"/>
+      <stop offset="1" stop-color="#0e0f12"/>
+    </linearGradient>
+    <linearGradient id="tileGrad4F" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15171b"/>
+      <stop offset="1" stop-color="#0a0b0d"/>
     </linearGradient>
 
     <filter id="frostBlurF" x="-50%" y="-50%" width="200%" height="200%">
@@ -31,42 +43,42 @@
 
     <clipPath id="wedgeClip1F">
       <g transform="skewX(-16)">
-        <path d="M40.74 43.88 L27.705 -255.84 L268.68 -150.98 L40.61 43.83 Z"/>
+        <path d="M43.603 40.748 L30.572 -258.969 L269.059 -155.253 L40.946 39.592 Z"/>
       </g>
     </clipPath>
     <clipPath id="wedgeClip2F">
       <g transform="skewX(-16)">
-        <path d="M44.51 48.39 L272.58 -146.42 L277.08 240.95 L44.545 51.464 Z"/>
+        <path d="M48.740 48.717 L276.852 -146.129 L281.338 240.536 L48.767 51.034 Z"/>
       </g>
     </clipPath>
     <clipPath id="wedgeClip3F">
       <g transform="skewX(-16)">
-        <path d="M40.755 56.116 L273.29 245.6 L84.25 352.51 L41.82 55.52 Z"/>
+        <path d="M41.187 60.336 L273.758 249.838 L87.639 355.046 L45.212 58.061 Z"/>
       </g>
     </clipPath>
     <clipPath id="wedgeClip4F">
       <g transform="skewX(-16)">
-        <path d="M35.88 56.36 L78.31 353.35 L-262 50 L21.705 -255.58 L34.74 44.14 Z"/>
+        <path d="M33.333 59.758 L75.760 356.743 L-262 50 L18.584 -258.448 L31.615 41.269 Z"/>
       </g>
     </clipPath>
   </defs>
 
   <g clip-path="url(#tileClipF)">
-    <g clip-path="url(#wedgeClip1F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGradF)"/></g>
-    <g clip-path="url(#wedgeClip2F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGradF)"/></g>
-    <g clip-path="url(#wedgeClip3F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGradF)"/></g>
-    <g clip-path="url(#wedgeClip4F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGradF)"/></g>
+    <g clip-path="url(#wedgeClip1F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad1F)"/></g>
+    <g clip-path="url(#wedgeClip2F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad2F)"/></g>
+    <g clip-path="url(#wedgeClip3F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad3F)"/></g>
+    <g clip-path="url(#wedgeClip4F)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad4F)"/></g>
 
-    <g transform="skewX(-16)" stroke="#05070a" stroke-opacity="0.4" stroke-width="2.2" fill="none" stroke-linecap="butt" filter="url(#shadowBlurF)">
-      <path d="M43.24 43.77 L41.79 10.66"/>
-      <path d="M32.24 44.25 L30.81 11.14"/>
-      <path d="M33.41 56.71 L37.66 86.48"/>
-      <path d="M44.3 55.17 L48.55 84.92"/>
-      <path d="M46.13 50.29 L82.37 19.33"/>
-      <path d="M38.99 41.93 L75.23 10.97"/>
-      <path d="M39.18 58.05 L80.43 91.66"/>
-      <path d="M46.12 49.53 L87.37 83.14"/>
-      <circle cx="38" cy="50" r="6.2"/>
+    <g transform="skewX(-16)" stroke="#05070a" stroke-opacity="0.4" stroke-width="2.4" fill="none" stroke-linecap="butt" filter="url(#shadowBlurF)">
+      <path d="M47.100 40.596 L45.651 7.267"/>
+      <path d="M28.118 41.421 L26.669 8.093"/>
+      <path d="M29.868 60.253 L34.115 89.984"/>
+      <path d="M48.677 57.566 L52.925 87.296"/>
+      <path d="M51.013 51.378 L88.330 19.504"/>
+      <path d="M38.673 36.931 L75.990 5.056"/>
+      <path d="M38.976 63.050 L81.679 97.845"/>
+      <path d="M50.978 48.320 L93.681 83.115"/>
+      <circle cx="38" cy="50" r="11"/>
     </g>
 
     <g fill="none" stroke="#ffffff">
@@ -74,26 +86,26 @@
       <rect x="4" y="4" width="92" height="92" rx="20" stroke-width="1" stroke-opacity="0.55"/>
       <g transform="skewX(-16)" stroke-linecap="butt">
         <g filter="url(#frostBlurThinF)" stroke-width="1.6" stroke-opacity="0.3">
-          <path d="M40.74 43.88 L39.297 10.77"/>
-          <path d="M34.74 44.14 L33.303 11.03"/>
-          <path d="M35.88 56.36 L40.13 86.124"/>
-          <path d="M41.82 55.52 L46.07 85.276"/>
-          <path d="M44.51 48.39 L80.747 17.43"/>
-          <path d="M40.61 43.83 L76.853 12.87"/>
-          <path d="M40.755 56.116 L82.005 89.726"/>
-          <path d="M44.545 51.464 L85.795 85.074"/>
-          <circle cx="38" cy="50" r="4"/>
+          <path d="M43.603 40.748 L42.154 7.419"/>
+          <path d="M31.615 41.269 L30.166 7.941"/>
+          <path d="M33.333 59.758 L37.580 89.489"/>
+          <path d="M45.212 58.061 L49.460 87.791"/>
+          <path d="M48.740 48.717 L86.057 16.842"/>
+          <path d="M40.946 39.592 L78.263 7.718"/>
+          <path d="M41.187 60.336 L83.890 95.131"/>
+          <path d="M48.767 51.034 L91.470 85.829"/>
+          <circle cx="38" cy="50" r="7.8"/>
         </g>
         <g stroke-width="0.7" stroke-opacity="0.55">
-          <path d="M40.74 43.88 L39.297 10.77"/>
-          <path d="M34.74 44.14 L33.303 11.03"/>
-          <path d="M35.88 56.36 L40.13 86.124"/>
-          <path d="M41.82 55.52 L46.07 85.276"/>
-          <path d="M44.51 48.39 L80.747 17.43"/>
-          <path d="M40.61 43.83 L76.853 12.87"/>
-          <path d="M40.755 56.116 L82.005 89.726"/>
-          <path d="M44.545 51.464 L85.795 85.074"/>
-          <circle cx="38" cy="50" r="4"/>
+          <path d="M43.603 40.748 L42.154 7.419"/>
+          <path d="M31.615 41.269 L30.166 7.941"/>
+          <path d="M33.333 59.758 L37.580 89.489"/>
+          <path d="M45.212 58.061 L49.460 87.791"/>
+          <path d="M48.740 48.717 L86.057 16.842"/>
+          <path d="M40.946 39.592 L78.263 7.718"/>
+          <path d="M41.187 60.336 L83.890 95.131"/>
+          <path d="M48.767 51.034 L91.470 85.829"/>
+          <circle cx="38" cy="50" r="7.8"/>
         </g>
       </g>
     </g>
@@ -115,16 +127,16 @@
         <circle cx="38" cy="50" r="2">
           <animate attributeName="opacity" values="0;1;0.2;0" keyTimes="0;0.15;0.45;1" dur="1.9s" begin="0.3s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="36.3" cy="10.9" r="1.5">
+        <circle cx="36.160" cy="7.680" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.4s" begin="0.9s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="43.1" cy="85.7" r="1.5">
+        <circle cx="43.520" cy="88.640" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.2s" begin="1.4s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="78.8" cy="15.15" r="1.5">
+        <circle cx="82.160" cy="12.280" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.5s" begin="0.2s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="83.9" cy="87.4" r="1.5">
+        <circle cx="87.680" cy="90.480" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.0s" begin="1.8s" repeatCount="indefinite"/>
         </circle>
       </g>

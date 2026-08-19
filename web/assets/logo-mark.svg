@@ -1,8 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="tileGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1a1c20"/>
-      <stop offset="1" stop-color="#0b0c0e"/>
+    <!-- 4 gradientes, uno por fragmento, con un tinte apenas distinto cada
+         uno (como facetas de un cristal real, cada una atrapando la luz un
+         poco distinto) — si los 4 fragmentos compartieran exactamente el
+         mismo gradiente, la pieza se lee como una sola placa continua con
+         líneas encima en vez de 4 objetos separados. -->
+    <linearGradient id="tileGrad1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2126"/>
+      <stop offset="1" stop-color="#0c0d10"/>
+    </linearGradient>
+    <linearGradient id="tileGrad2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#181a1e"/>
+      <stop offset="1" stop-color="#08090b"/>
+    </linearGradient>
+    <linearGradient id="tileGrad3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22252a"/>
+      <stop offset="1" stop-color="#0e0f12"/>
+    </linearGradient>
+    <linearGradient id="tileGrad4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#15171b"/>
+      <stop offset="1" stop-color="#0a0b0d"/>
     </linearGradient>
 
     <filter id="frostBlur" x="-50%" y="-50%" width="200%" height="200%">
@@ -37,92 +54,98 @@
          skewX — el espacio entre los fragmentos (no un hueco recortado en
          una sola placa) es lo que dibuja la K. Cada wedgeClip es una de
          esas 4 cuñas angulares alrededor del vértice, con sus dos bordes
-         internos corridos hacia adentro (mismo offset perpendicular que
-         usan luego el bisel y la sombra) para que quede un margen real
-         entre fragmentos vecinos. Cada polígono se extiende muy por fuera
-         del tile (los brazos "far*") solo para que, al intersecar con
-         tileClip vía clip-path anidado, quede la porción correcta del tile
-         en esa cuña — esos tramos lejanos nunca se ven. -->
+         internos corridos hacia adentro (offset perpendicular de 6, el
+         mismo que usa el bisel más abajo) para que la separación entre
+         fragmentos vecinos se note de verdad. La recta de cada borde sigue
+         derecho hasta bien lejos del tile (los brazos "far*", a 300 de
+         distancia) — no se corta a la altura de las puntas del bisel/
+         destellos como sí hacen esos elementos decorativos — así la
+         separación real (lo que se ve transparente) llega hasta el borde
+         del tile, aunque el brillo del bisel se apague antes. -->
     <clipPath id="wedgeClip1">
       <g transform="skewX(-16)">
-        <path d="M40.74 43.88 L27.705 -255.84 L268.68 -150.98 L40.61 43.83 Z"/>
+        <path d="M43.603 40.748 L30.572 -258.969 L269.059 -155.253 L40.946 39.592 Z"/>
       </g>
     </clipPath>
     <clipPath id="wedgeClip2">
       <g transform="skewX(-16)">
-        <path d="M44.51 48.39 L272.58 -146.42 L277.08 240.95 L44.545 51.464 Z"/>
+        <path d="M48.740 48.717 L276.852 -146.129 L281.338 240.536 L48.767 51.034 Z"/>
       </g>
     </clipPath>
     <clipPath id="wedgeClip3">
       <g transform="skewX(-16)">
-        <path d="M40.755 56.116 L273.29 245.6 L84.25 352.51 L41.82 55.52 Z"/>
+        <path d="M41.187 60.336 L273.758 249.838 L87.639 355.046 L45.212 58.061 Z"/>
       </g>
     </clipPath>
     <clipPath id="wedgeClip4">
       <g transform="skewX(-16)">
-        <path d="M35.88 56.36 L78.31 353.35 L-262 50 L21.705 -255.58 L34.74 44.14 Z"/>
+        <path d="M33.333 59.758 L75.760 356.743 L-262 50 L18.584 -258.448 L31.615 41.269 Z"/>
       </g>
     </clipPath>
   </defs>
 
   <g clip-path="url(#tileClip)">
-    <!-- Los 4 fragmentos: mismo vidrio (mismo gradiente), cada uno recortado
-         a su propia cuña. No hay una placa entera con un agujero: si un
-         fragmento faltara, se notaría un vacío con la forma de esa cuña,
-         no "un pedazo de la K". -->
-    <g clip-path="url(#wedgeClip1)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
-    <g clip-path="url(#wedgeClip2)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
-    <g clip-path="url(#wedgeClip3)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
-    <g clip-path="url(#wedgeClip4)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
+    <!-- Los 4 fragmentos: cada uno con su propio gradiente, cada uno
+         recortado a su propia cuña. No hay una placa entera con un
+         agujero: si un fragmento faltara, se notaría un vacío con la
+         forma de esa cuña, no "un pedazo de la K". -->
+    <g clip-path="url(#wedgeClip1)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad1)"/></g>
+    <g clip-path="url(#wedgeClip2)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad2)"/></g>
+    <g clip-path="url(#wedgeClip3)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad3)"/></g>
+    <g clip-path="url(#wedgeClip4)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad4)"/></g>
 
-    <!-- Sombra de canto: cada fragmento la tira hacia la hendidura, un poco
-         más adentro que el bisel brillante (mismo offset perpendicular,
-         mayor magnitud) — sugiere que el corte tiene espesor y ese costado
-         está en penumbra, no es solo un canal parejo. Va debajo del bisel
-         brillante. -->
-    <g transform="skewX(-16)" stroke="#05070a" stroke-opacity="0.4" stroke-width="2.2" fill="none" stroke-linecap="butt" filter="url(#shadowBlur)">
-      <path d="M43.24 43.77 L41.79 10.66"/>
-      <path d="M32.24 44.25 L30.81 11.14"/>
-      <path d="M33.41 56.71 L37.66 86.48"/>
-      <path d="M44.3 55.17 L48.55 84.92"/>
-      <path d="M46.13 50.29 L82.37 19.33"/>
-      <path d="M38.99 41.93 L75.23 10.97"/>
-      <path d="M39.18 58.05 L80.43 91.66"/>
-      <path d="M46.12 49.53 L87.37 83.14"/>
-      <circle cx="38" cy="50" r="6.2"/>
+    <!-- Sombra de canto: cada fragmento la tira hacia la hendidura, más
+         adentro que el bisel brillante (mismo offset perpendicular, mayor
+         magnitud: 9.5 contra 6) — sugiere que el corte tiene espesor y ese
+         costado está en penumbra. Llega casi hasta el borde del tile
+         (0.92 del largo de cada rayo, contra 0.85 antes) para que la
+         separación se note también cerca de las puntas, no solo en el
+         medio — dejando apenas margen para que el blur se apague antes de
+         tileClip. Va debajo del bisel brillante. -->
+    <g transform="skewX(-16)" stroke="#05070a" stroke-opacity="0.4" stroke-width="2.4" fill="none" stroke-linecap="butt" filter="url(#shadowBlur)">
+      <path d="M47.100 40.596 L45.651 7.267"/>
+      <path d="M28.118 41.421 L26.669 8.093"/>
+      <path d="M29.868 60.253 L34.115 89.984"/>
+      <path d="M48.677 57.566 L52.925 87.296"/>
+      <path d="M51.013 51.378 L88.330 19.504"/>
+      <path d="M38.673 36.931 L75.990 5.056"/>
+      <path d="M38.976 63.050 L81.679 97.845"/>
+      <path d="M50.978 48.320 L93.681 83.115"/>
+      <circle cx="38" cy="50" r="11"/>
     </g>
 
     <!-- Bisel esmerilado: nace de los contornos de cada fragmento (su borde
          exterior y los dos filos que lo separan de sus vecinos), nunca del
-         medio del hueco. Cada filo arranca recortado a cierta distancia
-         del vértice (ahí los 8 filos —2 por corte× 4 cortes— convergerían
-         y se cruzarían) y ese hueco se cierra con un único aro circular en
-         el punto de impacto. -->
+         medio de la hendidura. Cada filo arranca recortado a cierta
+         distancia del vértice (ahí los 8 filos —2 por corte × 4 cortes—
+         convergerían y se cruzarían) y ese hueco se cierra con un único
+         aro circular en el punto de impacto. También llega casi hasta el
+         borde del tile (0.92), no solo hasta la mitad del corte. -->
     <g fill="none" stroke="#ffffff">
       <rect x="4" y="4" width="92" height="92" rx="20" stroke-width="3" stroke-opacity="0.3" filter="url(#frostBlur)"/>
       <rect x="4" y="4" width="92" height="92" rx="20" stroke-width="1" stroke-opacity="0.55"/>
       <g transform="skewX(-16)" stroke-linecap="butt">
         <g filter="url(#frostBlurThin)" stroke-width="1.6" stroke-opacity="0.3">
-          <path d="M40.74 43.88 L39.297 10.77"/>
-          <path d="M34.74 44.14 L33.303 11.03"/>
-          <path d="M35.88 56.36 L40.13 86.124"/>
-          <path d="M41.82 55.52 L46.07 85.276"/>
-          <path d="M44.51 48.39 L80.747 17.43"/>
-          <path d="M40.61 43.83 L76.853 12.87"/>
-          <path d="M40.755 56.116 L82.005 89.726"/>
-          <path d="M44.545 51.464 L85.795 85.074"/>
-          <circle cx="38" cy="50" r="4"/>
+          <path d="M43.603 40.748 L42.154 7.419"/>
+          <path d="M31.615 41.269 L30.166 7.941"/>
+          <path d="M33.333 59.758 L37.580 89.489"/>
+          <path d="M45.212 58.061 L49.460 87.791"/>
+          <path d="M48.740 48.717 L86.057 16.842"/>
+          <path d="M40.946 39.592 L78.263 7.718"/>
+          <path d="M41.187 60.336 L83.890 95.131"/>
+          <path d="M48.767 51.034 L91.470 85.829"/>
+          <circle cx="38" cy="50" r="7.8"/>
         </g>
         <g stroke-width="0.7" stroke-opacity="0.55">
-          <path d="M40.74 43.88 L39.297 10.77"/>
-          <path d="M34.74 44.14 L33.303 11.03"/>
-          <path d="M35.88 56.36 L40.13 86.124"/>
-          <path d="M41.82 55.52 L46.07 85.276"/>
-          <path d="M44.51 48.39 L80.747 17.43"/>
-          <path d="M40.61 43.83 L76.853 12.87"/>
-          <path d="M40.755 56.116 L82.005 89.726"/>
-          <path d="M44.545 51.464 L85.795 85.074"/>
-          <circle cx="38" cy="50" r="4"/>
+          <path d="M43.603 40.748 L42.154 7.419"/>
+          <path d="M31.615 41.269 L30.166 7.941"/>
+          <path d="M33.333 59.758 L37.580 89.489"/>
+          <path d="M45.212 58.061 L49.460 87.791"/>
+          <path d="M48.740 48.717 L86.057 16.842"/>
+          <path d="M40.946 39.592 L78.263 7.718"/>
+          <path d="M41.187 60.336 L83.890 95.131"/>
+          <path d="M48.767 51.034 L91.470 85.829"/>
+          <circle cx="38" cy="50" r="7.8"/>
         </g>
       </g>
     </g>
@@ -146,16 +169,16 @@
         <circle cx="38" cy="50" r="2">
           <animate attributeName="opacity" values="0;1;0.2;0" keyTimes="0;0.15;0.45;1" dur="1.9s" begin="0.3s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="36.3" cy="10.9" r="1.5">
+        <circle cx="36.160" cy="7.680" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.4s" begin="0.9s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="43.1" cy="85.7" r="1.5">
+        <circle cx="43.520" cy="88.640" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.2s" begin="1.4s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="78.8" cy="15.15" r="1.5">
+        <circle cx="82.160" cy="12.280" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.5s" begin="0.2s" repeatCount="indefinite"/>
         </circle>
-        <circle cx="83.9" cy="87.4" r="1.5">
+        <circle cx="87.680" cy="90.480" r="1.5">
           <animate attributeName="opacity" values="0;1;0.15;0" keyTimes="0;0.2;0.5;1" dur="2.0s" begin="1.8s" repeatCount="indefinite"/>
         </circle>
       </g>
