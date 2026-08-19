@@ -103,25 +103,46 @@ README no se actualizó.
 
 ## Marca K-Rez (logo) — en iteración visual, no cerrado
 
-`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) reflejan el concepto "grieta de
-vidrio inclinada" tal como quedó en la última vuelta aplicada a los archivos reales. En la conversación
-con el usuario surgieron correcciones/direcciones nuevas que **todavía no se portaron a estos SVG**:
+`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) ya reflejan la dirección "4
+fragmentos de vidrio + destellos" acordada:
 
-- Los extremos de la grieta usan `stroke-linecap="round"` — el usuario pidió cortes planos, no
-  redondeados.
-- Las puntas terminan dentro del tile (corte plano flotando en el vidrio); la dirección acordada es
-  que la grieta debe salir por el borde redondeado del ícono (extender las coordenadas más allá del
-  viewBox + un `clipPath` con la misma forma del tile, ya validado en un prototipo).
-- La animación de flujo (gradiente que viaja por dentro del trazo) se reemplazó en los prototipos por
-  varias alternativas exploradas y descartadas en orden: bandas tipo ecualizador, pulso viajero,
-  ventana que se abre/cierra parcialmente, patrón de fondo independiente de la geometría de la K
-  (barras/diagonal), destello blanco sin color predefinido. La dirección más reciente (no aplicada
-  aún): la **placa** (no la K) lleva un efecto de vidrio esmerilado + destellos tipo bola de disco
-  (`feGaussianBlur` + varios `<circle>` titilando asincrónicos), y la K es únicamente el agujero
-  transparente recortado en esa placa — sin ningún efecto propio.
-- Todo esto se validó en una hoja de propuestas (Artifact separado, fuera del repo) antes de tocar los
-  archivos — pendiente decidir la versión final con el usuario y recién ahí actualizar
-  `logo-mark.svg`/`logo-full.svg` (y este mismo README) para que coincidan.
+- El logo son **4 fragmentos separados**, no una placa entera con un agujero: 4 cortes rectos
+  (`stroke-linecap="butt"`) desde un punto de impacto central dividen el tile en 4 cuñas angulares
+  (`wedgeClip1`–`4`), cada una con su propio `<rect>` recortado. Es el espacio entre fragmentos (un
+  margen real de offset perpendicular 6, no solo una línea de "hueco recortado") lo que dibuja la K. Cada
+  fragmento usa además su propio gradiente (`tileGrad1`–`4`/`...F`), con un tinte apenas distinto entre
+  sí — si los 4 compartieran exactamente el mismo gradiente (como en una vuelta anterior), la pieza se
+  leía como una sola placa continua con líneas encima, no como 4 objetos separados.
+- Los 4 cortes (el recorte real, transparente) llegan derecho hasta bien lejos del tile (300 unidades) —
+  no se cortan a la altura de las puntas como sí hacen el bisel/sombra decorativos, así que la
+  separación entre fragmentos sigue siendo real incluso más allá de donde el brillo se apaga. El
+  bisel/sombra en cambio quedan contenidos adentro del tile, sin tocar `tileClip`, pero ahora llegan casi
+  hasta el borde (0.92 del largo de cada rayo, antes 0.85) — con 0.85 el brillo se apagaba bastante antes
+  de llegar a la punta y esa última porción del corte se veía sin bisel, como si los fragmentos se
+  reconectaran ahí. Dirección anterior descartada: la grieta "saliendo" por el borde (coordenadas
+  extendidas más allá del viewBox, truncadas por `tileClip`) — el clip corta a mitad de camino cualquier
+  trazo con blur que cruce por ahí, así que el bisel quedaba cortado en vez de apagarse solo. `tileClip`
+  solo redondea las esquinas de la placa; ningún otro elemento depende de él para su terminación visual.
+- Cada filo (el borde de un fragmento hacia la hendidura) lleva dos capas: una **sombra de canto**
+  oscura y blureada (`shadowBlur`/`shadowBlurF`), un poco más adentro del fragmento que el bisel — da la
+  sensación de que el corte tiene espesor y ese lado está en penumbra, no que es un canal parejo — y
+  encima el **bisel esmerilado** (halo blureado + trazo nítido), igual que en el borde exterior de la
+  placa.
+- Destellos (`<circle>` + `feGaussianBlur`/`feMerge` para el bloom) sobre esos mismos contornos —borde
+  del tile y filos de cada fragmento—, nunca sueltos en medio del vidrio; parpadean asincrónicamente
+  (`dur`/`begin` distintos por círculo) como en la referencia de "bola de disco".
+- En el punto de impacto (donde se juntan los 4 fragmentos) los filos NO se dibujan como 8 trazos
+  sueltos (2 por corte) hasta el vértice — eso los hacía cruzarse y dejaba una mancha con líneas sueltas
+  en el centro de la K. Cada filo arranca recortado a cierta distancia del vértice, y ese hueco se
+  cierra con un aro circular centrado ahí (uno para la sombra, uno para el bisel, radios distintos) en
+  vez de 8 puntas convergiendo.
+
+Pendiente de decidir con el usuario, no aplicado aún:
+
+- El efecto de vidrio esmerilado de cada fragmento en sí (más allá de sus contornos) — por ahora cada
+  uno es un gradiente plano, sin textura ni `feGaussianBlur` propio.
+- Afinar a ojo el offset/ancho exacto de filos, sombra de canto y la posición de los destellos —se
+  calcularon por geometría (vector perpendicular a cada rayo) sin una pasada de ajuste visual fino.
 
 ## Cosas menores, no bloqueantes
 
