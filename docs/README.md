@@ -48,7 +48,12 @@ K-Rez/
     │   ├── components.css  (inputs, botones, .bar, lista de canciones, sidebar de canciones)
     │   ├── player.css      (transporte, barra de buffer unificada, layout de Live, player-bar fijo)
     │   ├── lyrics.css      (editor de letra/secciones, panel de letra y chips en Live)
-    │   └── remote.css      (reservado para Fase 4, vacío)
+    │   ├── remote.css      (reservado para Fase 4, vacío)
+    │   └── auth.css        (pantalla de login: tarjeta de cristal, glow ambiental, botón de Google,
+    │                         ver sección 10)
+    ├── assets/
+    │   ├── logo-mark.svg   (ícono K-Rez — favicon + manifest, ver sección 10)
+    │   └── logo-full.svg   (lockup K-Rez completo — logo + "Rez", usado en el login)
     └── js/
         ├── app.js                    (rutas + bootstrap de auth)
         ├── firebase-config.js        (config del proyecto Firebase — no es secreta)
@@ -502,6 +507,29 @@ Set de [Lucide](https://lucide.dev) (licencia ISC) como SVG inline exactos — s
 mismo botón. Se escalan por CSS (`.icon { width: 1em; height: 1em; }`, en `base.css`) como si fueran un
 caracter más, heredando `currentColor`. `play`/`pause`/`circle` vienen rellenos por default (el resto
 outline) — reemplazan a los caracteres Unicode sueltos que se usaban antes (▶ ⏸ ⚙ ⌂ ☰ ▾ ● ✎ ✓ ✕ ⇄ ↑ ↓).
+
+### Login y marca K-Rez (`login-view.js`, `css/auth.css`, `assets/`)
+
+- **Pantalla de login** rediseñada sobre el mismo lenguaje de cristal que el resto de la app: tarjeta
+  centrada (`.auth-card`, mismos `--glass-*`/blur/borde que `.screen-header`/`.player-bar`) sobre un
+  glow ambiental fijo propio de la vista (`.auth-glow`, animado, vive dentro de `auth.css` — no toca
+  `body`, así que no necesita limpieza al navegar afuera). Botón "Continuar con Google" con el logo
+  oficial multicolor (guía de marca de Google, inline en `login-view.js`, no en `icons.js` — es de
+  colores fijos, no `currentColor` como el resto del set) y estado de carga (spinner) mientras
+  resuelve `signInWithGoogle()`. Alerta de error (cuenta no autorizada / fallo de popup) como banner
+  con ícono, no un `<p>` suelto.
+- **`icons.js`** ganó `alertCircle` (lucide `circle-alert`) para esa alerta — mismo patrón que el
+  resto del set (outline por default, ver sección 10 arriba).
+- **Marca K-Rez** (`web/assets/logo-mark.svg` para favicon/manifest, `logo-full.svg` con el wordmark
+  "Rez" para el login): favicon vía `<link rel="icon" type="image/svg+xml">` en `index.html` y entrada
+  de `icons` en `manifest.webmanifest` — sin PNG de respaldo, así que navegadores/instaladores PWA muy
+  viejos (o Safari &lt;16) no lo van a mostrar. Concepto actual del glifo: la "K" como la grieta de un
+  vidrio roto — 4 cortes rectos desde un punto de impacto central, inclinados (`skewX`), con una
+  franja de luz animada (gradiente que se traslada con `animateTransform`) fluyendo dentro de la
+  grieta vía dos `<mask>` (halo blureado + núcleo nítido).
+  **Nota:** este concepto sigue en iteración visual activa (discutido con el usuario, no cerrado) —
+  ver [`pendientes-plan-b.md`](./pendientes-plan-b.md) antes de asumir que el SVG committeado es la
+  versión final.
 
 ## 11. Setup local / despliegue
 

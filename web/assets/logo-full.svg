@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 100">
+  <defs>
+    <linearGradient id="tileGradF" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1a1c20"/>
+      <stop offset="1" stop-color="#0b0c0e"/>
+    </linearGradient>
+
+    <linearGradient id="flowGradF" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="70" spreadMethod="repeat">
+      <stop offset="0" stop-color="#3d84d6"/>
+      <stop offset="0.5" stop-color="#7ec8ff"/>
+      <stop offset="1" stop-color="#3d84d6"/>
+      <animateTransform attributeName="gradientTransform" type="translate" from="0 0" to="0 -70" dur="4s" repeatCount="indefinite"/>
+    </linearGradient>
+
+    <filter id="crackBlurF" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3"/>
+    </filter>
+
+    <mask id="maskGlowF">
+      <rect x="0" y="0" width="100" height="100" fill="black"/>
+      <g transform="skewX(-16)">
+        <path
+          d="M38 50 L36 4 M38 50 L44 92 M38 50 L86 9 M38 50 L92 94"
+          fill="none" stroke="white" stroke-width="14" stroke-linecap="round" filter="url(#crackBlurF)"
+        />
+      </g>
+    </mask>
+    <mask id="maskSharpF">
+      <rect x="0" y="0" width="100" height="100" fill="black"/>
+      <g transform="skewX(-16)">
+        <path
+          d="M38 50 L36 4 M38 50 L44 92 M38 50 L86 9 M38 50 L92 94"
+          fill="none" stroke="white" stroke-width="4" stroke-linecap="round"
+        />
+      </g>
+    </mask>
+
+    <clipPath id="tileClipF">
+      <rect x="4" y="4" width="92" height="92" rx="20"/>
+    </clipPath>
+  </defs>
+
+  <rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGradF)" stroke="#ffffff" stroke-opacity="0.14" stroke-width="1.5"/>
+  <g clip-path="url(#tileClipF)">
+    <rect x="0" y="0" width="100" height="100" fill="url(#flowGradF)" mask="url(#maskGlowF)" opacity="0.3"/>
+    <rect x="0" y="0" width="100" height="100" fill="url(#flowGradF)" mask="url(#maskSharpF)"/>
+  </g>
+
+  <text
+    x="106"
+    y="66"
+    font-family="'Segoe UI', system-ui, -apple-system, sans-serif"
+    font-size="60"
+    font-weight="800"
+    font-style="italic"
+    fill="#f2f2f2"
+    letter-spacing="0.5"
+  >Rez</text>
+</svg>

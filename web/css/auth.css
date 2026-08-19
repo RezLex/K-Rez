@@ -1,0 +1,196 @@
+/* Pantalla de login — mismo lenguaje de "cristal" que .screen-header/
+   .player-bar/.songs-sidebar (glass-bg/blur/border/highlight), pero acá el
+   acento es siempre --accent fijo (azul de la app): no hay carátula de la
+   que sacar un color, a diferencia de body.has-cover-accent en base.css. */
+
+.auth-screen {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap);
+  overflow: hidden;
+}
+
+/* Brillo ambiental fijo, mismo mecanismo que body.has-cover-accent::before
+   (base.css) pero con --accent en vez de --cover-accent, y viviendo dentro
+   de la propia vista (no en `body`) — al navegar afuera del login,
+   mount() reemplaza este subárbol entero y el brillo se va con él, sin
+   necesitar ninguna limpieza aparte en otro módulo. */
+.auth-glow {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle farthest-corner at 50% 32%, rgba(77, 163, 255, 0.28), transparent 60%);
+  animation: auth-glow-pulse 6s ease-in-out infinite;
+}
+
+@keyframes auth-glow-pulse {
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-glow {
+    animation: none;
+  }
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gap);
+  padding: 36px 28px 28px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: inset 0 1px 0 var(--glass-highlight), 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+.auth-logo {
+  width: auto;
+  height: 56px;
+  max-width: 100%;
+  filter: drop-shadow(0 4px 16px rgba(77, 163, 255, 0.35));
+}
+
+/* Mini ecualizador decorativo — solo acá (no en el ícono/favicon, donde a
+   tamaño chico se vuelve ruido ilegible): guiño a "karaoke" junto al
+   logo, barras animadas como niveles de audio. */
+.auth-eq {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 18px;
+  margin: 2px 0 2px;
+}
+
+.auth-eq span {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.7;
+  animation: auth-eq-bounce 1.1s ease-in-out infinite;
+}
+
+.auth-eq span:nth-child(1) {
+  animation-delay: -0.9s;
+}
+.auth-eq span:nth-child(2) {
+  animation-delay: -0.6s;
+}
+.auth-eq span:nth-child(3) {
+  animation-delay: -0.3s;
+}
+.auth-eq span:nth-child(4) {
+  animation-delay: -1.05s;
+}
+
+@keyframes auth-eq-bounce {
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-eq span {
+    animation: none;
+    height: 10px;
+  }
+}
+
+.auth-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--glass-border);
+  margin: 4px 0;
+}
+
+.google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.google-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.google-btn:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.google-btn-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+
+/* Spinner del botón mientras signInWithGoogle() resuelve — reemplaza al ícono
+   de Google en vez de superponerse, para no mandar dos señales de estado a
+   la vez. */
+.google-btn-spinner {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--text);
+  animation: auth-spin 0.7s linear infinite;
+}
+
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.auth-alert {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: rgba(255, 92, 92, 0.1);
+  border: 1px solid rgba(255, 92, 92, 0.35);
+  color: var(--danger);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.auth-alert .icon {
+  flex: none;
+  margin-top: 1px;
+}
+
+.auth-footnote {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+}

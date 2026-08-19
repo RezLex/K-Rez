@@ -1,6 +1,6 @@
 # Pendientes — Plan B (frontend)
 
-Estado al 2026-08-17. Ver [`README.md`](./README.md) para contexto de arquitectura y
+Estado al 2026-08-19. Ver [`README.md`](./README.md) para contexto de arquitectura y
 [`pendientes-plan-a.md`](./pendientes-plan-a.md) para lo que falta del lado del servidor.
 
 ## Bloqueado por Plan A (no depende de este lado)
@@ -100,6 +100,28 @@ README no se actualizó.
   sección 10 del README) se comporte igual en Firefox/Safari.
 - Prueba de la vista Live específicamente en mobile (el layout de dos columnas es desktop-first; el
   fallback a una columna en mobile no se validó en un dispositivo real, solo se infiere del CSS).
+
+## Marca K-Rez (logo) — en iteración visual, no cerrado
+
+`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) reflejan el concepto "grieta de
+vidrio inclinada" tal como quedó en la última vuelta aplicada a los archivos reales. En la conversación
+con el usuario surgieron correcciones/direcciones nuevas que **todavía no se portaron a estos SVG**:
+
+- Los extremos de la grieta usan `stroke-linecap="round"` — el usuario pidió cortes planos, no
+  redondeados.
+- Las puntas terminan dentro del tile (corte plano flotando en el vidrio); la dirección acordada es
+  que la grieta debe salir por el borde redondeado del ícono (extender las coordenadas más allá del
+  viewBox + un `clipPath` con la misma forma del tile, ya validado en un prototipo).
+- La animación de flujo (gradiente que viaja por dentro del trazo) se reemplazó en los prototipos por
+  varias alternativas exploradas y descartadas en orden: bandas tipo ecualizador, pulso viajero,
+  ventana que se abre/cierra parcialmente, patrón de fondo independiente de la geometría de la K
+  (barras/diagonal), destello blanco sin color predefinido. La dirección más reciente (no aplicada
+  aún): la **placa** (no la K) lleva un efecto de vidrio esmerilado + destellos tipo bola de disco
+  (`feGaussianBlur` + varios `<circle>` titilando asincrónicos), y la K es únicamente el agujero
+  transparente recortado en esa placa — sin ningún efecto propio.
+- Todo esto se validó en una hoja de propuestas (Artifact separado, fuera del repo) antes de tocar los
+  archivos — pendiente decidir la versión final con el usuario y recién ahí actualizar
+  `logo-mark.svg`/`logo-full.svg` (y este mismo README) para que coincidan.
 
 ## Cosas menores, no bloqueantes
 
