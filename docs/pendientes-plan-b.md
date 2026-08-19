@@ -103,36 +103,39 @@ README no se actualizó.
 
 ## Marca K-Rez (logo) — en iteración visual, no cerrado
 
-`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) ya reflejan la dirección "placa
-esmerilada + destellos" acordada:
+`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) ya reflejan la dirección "4
+fragmentos de vidrio + destellos" acordada:
 
-- Cortes planos (`stroke-linecap="butt"`, ya no `round`).
-- La grieta (agujero + bisel) queda contenida adentro del tile, sin tocar `tileClip`: las 4 puntas
-  terminan en los mismos puntos que los destellos de punta (ver más abajo), bien adentro del borde
-  redondeado. Dirección anterior descartada: la grieta "saliendo" por el borde (coordenadas extendidas
-  más allá del viewBox, truncadas por el clip) — el clip corta a mitad de camino cualquier trazo con
-  blur que cruce por ahí, así que el bisel quedaba cortado en vez de apagarse solo. Ningún elemento del
-  logo debe depender de `tileClip` para su terminación visual; el clip es solo para las esquinas
-  redondeadas de la placa en sí.
-- La K es un agujero transparente recortado con `<mask>` sobre la placa (`plateMask`/`plateMaskF`), sin
-  ningún efecto propio — se verificó con fondo a cuadros que el hueco deja ver lo que hay detrás.
-- El esmerilado (halo blureado + trazo nítido) se aplica por igual al borde exterior de la placa y a los
-  dos filos de cada corte de la K (trazos paralelos con offset perpendicular a cada rayo, no un único
-  trazo centrado — así el centro del hueco queda realmente transparente en vez de tapado).
-- Destellos (`<circle>` + `feGaussianBlur`/`feMerge` para el bloom) sobre esos contornos —borde del tile
-  y filos de la K—, nunca sueltos en medio del vidrio; parpadean asincrónicamente (`dur`/`begin`
-  distintos por círculo) como en la referencia de "bola de disco".
-- En el punto de impacto (donde convergen los 4 cortes) los filos NO se dibujan como 8 trazos sueltos
-  (2 por rayo) hasta el vértice — eso los hacía cruzarse y dejaba una mancha con líneas sueltas en el
-  centro de la K. Cada filo arranca recortado a cierta distancia del vértice, y ese hueco se cierra con
-  un único aro circular centrado en el punto de impacto — mismo tratamiento esmerilado, pero como una
-  sola silueta limpia en vez de 8 puntas convergiendo.
+- El logo son **4 fragmentos separados**, no una placa entera con un agujero: 4 cortes rectos
+  (`stroke-linecap="butt"`) desde un punto de impacto central dividen el tile en 4 cuñas angulares
+  (`wedgeClip1`–`4`), cada una con su propio `<rect fill="url(#tileGrad)">` recortado. Es el espacio
+  entre fragmentos (un margen real, no solo una línea de "hueco recortado") lo que dibuja la K.
+- Los 4 cortes quedan contenidos adentro del tile, sin tocar `tileClip`: las 4 puntas terminan en los
+  mismos puntos que los destellos de punta (ver más abajo), bien adentro del borde redondeado. Dirección
+  anterior descartada: la grieta "saliendo" por el borde (coordenadas extendidas más allá del viewBox,
+  truncadas por el clip) — el clip corta a mitad de camino cualquier trazo con blur que cruce por ahí,
+  así que el bisel quedaba cortado en vez de apagarse solo. `tileClip` solo redondea las esquinas de la
+  placa; ningún otro elemento depende de él para su terminación visual.
+- Cada filo (el borde de un fragmento hacia la hendidura) lleva dos capas: una **sombra de canto**
+  oscura y blureada (`shadowBlur`/`shadowBlurF`), un poco más adentro del fragmento que el bisel — da la
+  sensación de que el corte tiene espesor y ese lado está en penumbra, no que es un canal parejo — y
+  encima el **bisel esmerilado** (halo blureado + trazo nítido), igual que en el borde exterior de la
+  placa.
+- Destellos (`<circle>` + `feGaussianBlur`/`feMerge` para el bloom) sobre esos mismos contornos —borde
+  del tile y filos de cada fragmento—, nunca sueltos en medio del vidrio; parpadean asincrónicamente
+  (`dur`/`begin` distintos por círculo) como en la referencia de "bola de disco".
+- En el punto de impacto (donde se juntan los 4 fragmentos) los filos NO se dibujan como 8 trazos
+  sueltos (2 por corte) hasta el vértice — eso los hacía cruzarse y dejaba una mancha con líneas sueltas
+  en el centro de la K. Cada filo arranca recortado a cierta distancia del vértice, y ese hueco se
+  cierra con un aro circular centrado ahí (uno para la sombra, uno para el bisel, radios distintos) en
+  vez de 8 puntas convergiendo.
 
 Pendiente de decidir con el usuario, no aplicado aún:
 
-- El efecto de vidrio esmerilado de la placa en sí (más allá de los contornos) — por ahora la placa es
-  un gradiente plano (`tileGrad`/`tileGradF`), sin textura ni `feGaussianBlur` propio.
-- Afinar a ojo el offset/ancho exacto de los dos filos de la K y la posición de los destellos —se
+- El efecto de vidrio esmerilado de cada fragmento en sí (más allá de sus contornos) — por ahora cada
+  uno es un gradiente plano (`tileGrad`/`tileGradF`), sin textura ni `feGaussianBlur` propio, y los 4
+  comparten exactamente el mismo gradiente (no hay variación de tono entre fragmentos).
+- Afinar a ojo el offset/ancho exacto de filos, sombra de canto y la posición de los destellos —se
   calcularon por geometría (vector perpendicular a cada rayo) sin una pasada de ajuste visual fino.
 
 ## Cosas menores, no bloqueantes

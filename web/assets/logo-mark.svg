@@ -13,7 +13,13 @@
       <feGaussianBlur stdDeviation="1.2"/>
     </filter>
 
-    <!-- Bloom de los destellos: blur + la forma nítida encima. -->
+    <!-- Sombra que cada fragmento tira hacia la hendidura: más ancha y más
+         blureada que el bisel brillante, para leerse como la cara en
+         penumbra del corte (el "canto" del vidrio), no como otro brillo. -->
+    <filter id="shadowBlur" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="1.8"/>
+    </filter>
+
     <filter id="glint" x="-200%" y="-200%" width="500%" height="500%">
       <feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="blur"/>
       <feMerge>
@@ -26,40 +32,72 @@
       <rect x="4" y="4" width="92" height="92" rx="20"/>
     </clipPath>
 
-    <!-- La "K" es la grieta de un vidrio roto: 4 cortes rectos desde un
-         punto de impacto central (38,50), inclinados con skewX, en un único
-         <path> que pasa por el centro varias veces (en vez de 4 subpaths
-         sueltos) para que los 4 brazos se fundan en una sola silueta en el
-         vértice, sin dejar una cuña sin cubrir ahí. stroke-linejoin="round"
-         + stroke-linecap="butt": puntas planas, vértice fundido sin picos.
-         Las 4 puntas terminan bien adentro del tile (mismos puntos que los
-         destellos de punta, más abajo) — nunca tocan tileClip: si el corte
-         llegara al borde, el clip le cortaría el bisel (el halo blureado)
-         a mitad de camino en vez de dejarlo apagarse solo. -->
-    <mask id="plateMask">
-      <rect x="4" y="4" width="92" height="92" rx="20" fill="white"/>
+    <!-- El logo son 4 fragmentos de vidrio separados por 4 cortes rectos que
+         nacen de un punto de impacto central (38,50), inclinados con
+         skewX — el espacio entre los fragmentos (no un hueco recortado en
+         una sola placa) es lo que dibuja la K. Cada wedgeClip es una de
+         esas 4 cuñas angulares alrededor del vértice, con sus dos bordes
+         internos corridos hacia adentro (mismo offset perpendicular que
+         usan luego el bisel y la sombra) para que quede un margen real
+         entre fragmentos vecinos. Cada polígono se extiende muy por fuera
+         del tile (los brazos "far*") solo para que, al intersecar con
+         tileClip vía clip-path anidado, quede la porción correcta del tile
+         en esa cuña — esos tramos lejanos nunca se ven. -->
+    <clipPath id="wedgeClip1">
       <g transform="skewX(-16)">
-        <path
-          d="M36.3 10.9 L38 50 L43.1 85.7 L38 50 L78.8 15.15 L38 50 L83.9 87.4"
-          fill="none" stroke="black" stroke-width="8" stroke-linecap="butt" stroke-linejoin="round"
-        />
+        <path d="M40.74 43.88 L27.705 -255.84 L268.68 -150.98 L40.61 43.83 Z"/>
       </g>
-    </mask>
+    </clipPath>
+    <clipPath id="wedgeClip2">
+      <g transform="skewX(-16)">
+        <path d="M44.51 48.39 L272.58 -146.42 L277.08 240.95 L44.545 51.464 Z"/>
+      </g>
+    </clipPath>
+    <clipPath id="wedgeClip3">
+      <g transform="skewX(-16)">
+        <path d="M40.755 56.116 L273.29 245.6 L84.25 352.51 L41.82 55.52 Z"/>
+      </g>
+    </clipPath>
+    <clipPath id="wedgeClip4">
+      <g transform="skewX(-16)">
+        <path d="M35.88 56.36 L78.31 353.35 L-262 50 L21.705 -255.58 L34.74 44.14 Z"/>
+      </g>
+    </clipPath>
   </defs>
 
   <g clip-path="url(#tileClip)">
-    <!-- Placa de vidrio: la K es un agujero transparente recortado con
-         plateMask, sin relleno ni efecto propio — el hueco en sí no "hace"
-         nada, es la ausencia de placa. -->
-    <rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)" mask="url(#plateMask)"/>
+    <!-- Los 4 fragmentos: mismo vidrio (mismo gradiente), cada uno recortado
+         a su propia cuña. No hay una placa entera con un agujero: si un
+         fragmento faltara, se notaría un vacío con la forma de esa cuña,
+         no "un pedazo de la K". -->
+    <g clip-path="url(#wedgeClip1)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
+    <g clip-path="url(#wedgeClip2)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
+    <g clip-path="url(#wedgeClip3)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
+    <g clip-path="url(#wedgeClip4)"><rect x="4" y="4" width="92" height="92" rx="20" fill="url(#tileGrad)"/></g>
 
-    <!-- Bisel esmerilado: nace de los contornos de la placa (su borde
-         exterior y los dos filos de cada corte de la K), nunca del medio
-         del hueco. Cada filo es un trazo paralelo al corte, corrido hacia
-         afuera desde el vértice (no pasa por el punto de impacto: ahí las
-         8 líneas —2 filos × 4 rayos— se cruzaban y ensuciaban el centro),
-         más un único aro circular en el vértice para el bisel de esa zona
-         redondeada donde se funden los 4 brazos. -->
+    <!-- Sombra de canto: cada fragmento la tira hacia la hendidura, un poco
+         más adentro que el bisel brillante (mismo offset perpendicular,
+         mayor magnitud) — sugiere que el corte tiene espesor y ese costado
+         está en penumbra, no es solo un canal parejo. Va debajo del bisel
+         brillante. -->
+    <g transform="skewX(-16)" stroke="#05070a" stroke-opacity="0.4" stroke-width="2.2" fill="none" stroke-linecap="butt" filter="url(#shadowBlur)">
+      <path d="M43.24 43.77 L41.79 10.66"/>
+      <path d="M32.24 44.25 L30.81 11.14"/>
+      <path d="M33.41 56.71 L37.66 86.48"/>
+      <path d="M44.3 55.17 L48.55 84.92"/>
+      <path d="M46.13 50.29 L82.37 19.33"/>
+      <path d="M38.99 41.93 L75.23 10.97"/>
+      <path d="M39.18 58.05 L80.43 91.66"/>
+      <path d="M46.12 49.53 L87.37 83.14"/>
+      <circle cx="38" cy="50" r="6.2"/>
+    </g>
+
+    <!-- Bisel esmerilado: nace de los contornos de cada fragmento (su borde
+         exterior y los dos filos que lo separan de sus vecinos), nunca del
+         medio del hueco. Cada filo arranca recortado a cierta distancia
+         del vértice (ahí los 8 filos —2 por corte× 4 cortes— convergerían
+         y se cruzarían) y ese hueco se cierra con un único aro circular en
+         el punto de impacto. -->
     <g fill="none" stroke="#ffffff">
       <rect x="4" y="4" width="92" height="92" rx="20" stroke-width="3" stroke-opacity="0.3" filter="url(#frostBlur)"/>
       <rect x="4" y="4" width="92" height="92" rx="20" stroke-width="1" stroke-opacity="0.55"/>

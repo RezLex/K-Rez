@@ -523,15 +523,23 @@ outline) — reemplazan a los caracteres Unicode sueltos que se usaban antes (�
 - **Marca K-Rez** (`web/assets/logo-mark.svg` para favicon/manifest, `logo-full.svg` con el wordmark
   "Rez" para el login): favicon vía `<link rel="icon" type="image/svg+xml">` en `index.html` y entrada
   de `icons` en `manifest.webmanifest` — sin PNG de respaldo, así que navegadores/instaladores PWA muy
-  viejos (o Safari &lt;16) no lo van a mostrar. Concepto del glifo: la "K" como la grieta de un vidrio
-  roto — 4 cortes rectos (`stroke-linecap="butt"`) desde un punto de impacto central, inclinados
-  (`skewX`), extendidos más allá del viewBox y truncados por un `clipPath` con la forma del tile para
-  que salgan por su borde redondeado. La K es un agujero transparente recortado en la placa
-  (`<mask>`, no relleno propio); tanto el borde exterior de la placa como los dos filos de cada corte
-  de la K llevan el mismo tratamiento "esmerilado" (halo blureado + trazo nítido, offset perpendicular
-  a cada rayo para dejar el centro del hueco realmente transparente) y destellos (`<circle>` con bloom
-  vía `feGaussianBlur`/`feMerge`) que titilan asincrónicamente sobre esos contornos — nunca sueltos en
-  medio del vidrio.
+  viejos (o Safari &lt;16) no lo van a mostrar. Concepto del glifo: **4 fragmentos de vidrio separados
+  por 4 cortes rectos** (`stroke-linecap="butt"`) que nacen de un punto de impacto central, inclinados
+  (`skewX`) — es el espacio *entre* los fragmentos, no un agujero recortado en una sola placa, lo que
+  dibuja la K. Cada fragmento es su propio `<rect fill="url(#tileGrad)">` recortado a una cuña angular
+  propia (`wedgeClip1`–`4`, un `<clipPath>` por fragmento); los 4 cubren el tile completo sin superponerse,
+  separados por un margen real (offset perpendicular a cada corte) en vez de tocarse. Los 4 cortes
+  quedan contenidos bien adentro del tile (nunca tocan `tileClip`, que solo redondea las esquinas de la
+  placa): que un trazo con blur cruce ese clip lo corta a mitad de camino en vez de dejarlo apagarse
+  solo, así que ningún elemento depende de él para su terminación visual — las 4 puntas terminan en los
+  mismos puntos que los destellos de punta. Cada filo (el borde de un fragmento que da hacia la
+  hendidura) lleva dos capas: una sombra de canto oscura y blureada un poco más adentro (sugiere que el
+  corte tiene espesor y ese lado está en penumbra) y, encima, el bisel "esmerilado" (halo blureado +
+  trazo nítido) — mismo tratamiento en el borde exterior de la placa. En el punto de impacto, donde
+  convergen los 4 fragmentos, cada filo se recorta antes de llegar al vértice (ahí 8 filos —2 por
+  corte× 4— se cruzarían) y ese hueco se cierra con un aro circular (uno para la sombra, uno para el
+  bisel) en vez de 8 puntas sueltas. Destellos (`<circle>` con bloom vía `feGaussianBlur`/`feMerge`)
+  titilan asincrónicamente sobre esos mismos contornos — nunca sueltos en medio del vidrio.
   **Nota:** el efecto de esmerilado de la placa en sí (más allá de sus contornos) sigue sin aplicarse,
   y el offset/posición de filos y destellos se calcularon por geometría sin una pasada de ajuste visual
   fino — ver [`pendientes-plan-b.md`](./pendientes-plan-b.md) antes de asumir que el SVG committeado es
