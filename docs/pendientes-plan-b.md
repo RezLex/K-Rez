@@ -107,10 +107,15 @@ README no se actualizó.
 esmerilada + destellos" acordada:
 
 - Cortes planos (`stroke-linecap="butt"`, ya no `round`).
-- La grieta sale por el borde redondeado del tile (coordenadas extendidas más allá del viewBox +
-  `clipPath` con la misma forma del tile que las trunca justo en el borde).
+- La grieta (agujero + bisel) queda contenida adentro del tile, sin tocar `tileClip`: las 4 puntas
+  terminan en los mismos puntos que los destellos de punta (ver más abajo), bien adentro del borde
+  redondeado. Dirección anterior descartada: la grieta "saliendo" por el borde (coordenadas extendidas
+  más allá del viewBox, truncadas por el clip) — el clip corta a mitad de camino cualquier trazo con
+  blur que cruce por ahí, así que el bisel quedaba cortado en vez de apagarse solo. Ningún elemento del
+  logo debe depender de `tileClip` para su terminación visual; el clip es solo para las esquinas
+  redondeadas de la placa en sí.
 - La K es un agujero transparente recortado con `<mask>` sobre la placa (`plateMask`/`plateMaskF`), sin
-  ningún efecto propio — se verificó con fondo claro que el hueco deja ver lo que hay detrás.
+  ningún efecto propio — se verificó con fondo a cuadros que el hueco deja ver lo que hay detrás.
 - El esmerilado (halo blureado + trazo nítido) se aplica por igual al borde exterior de la placa y a los
   dos filos de cada corte de la K (trazos paralelos con offset perpendicular a cada rayo, no un único
   trazo centrado — así el centro del hueco queda realmente transparente en vez de tapado).
