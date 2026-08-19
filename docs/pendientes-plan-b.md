@@ -117,6 +117,11 @@ esmerilada + destellos" acordada:
 - Destellos (`<circle>` + `feGaussianBlur`/`feMerge` para el bloom) sobre esos contornos —borde del tile
   y filos de la K—, nunca sueltos en medio del vidrio; parpadean asincrónicamente (`dur`/`begin`
   distintos por círculo) como en la referencia de "bola de disco".
+- En el punto de impacto (donde convergen los 4 cortes) los filos NO se dibujan como 8 trazos sueltos
+  (2 por rayo) hasta el vértice — eso los hacía cruzarse y dejaba una mancha con líneas sueltas en el
+  centro de la K. Cada filo arranca recortado a cierta distancia del vértice, y ese hueco se cierra con
+  un único aro circular centrado en el punto de impacto — mismo tratamiento esmerilado, pero como una
+  sola silueta limpia en vez de 8 puntas convergiendo.
 
 Pendiente de decidir con el usuario, no aplicado aún:
 
