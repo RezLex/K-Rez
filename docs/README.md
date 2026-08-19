@@ -523,13 +523,19 @@ outline) — reemplazan a los caracteres Unicode sueltos que se usaban antes (�
 - **Marca K-Rez** (`web/assets/logo-mark.svg` para favicon/manifest, `logo-full.svg` con el wordmark
   "Rez" para el login): favicon vía `<link rel="icon" type="image/svg+xml">` en `index.html` y entrada
   de `icons` en `manifest.webmanifest` — sin PNG de respaldo, así que navegadores/instaladores PWA muy
-  viejos (o Safari &lt;16) no lo van a mostrar. Concepto actual del glifo: la "K" como la grieta de un
-  vidrio roto — 4 cortes rectos desde un punto de impacto central, inclinados (`skewX`), con una
-  franja de luz animada (gradiente que se traslada con `animateTransform`) fluyendo dentro de la
-  grieta vía dos `<mask>` (halo blureado + núcleo nítido).
-  **Nota:** este concepto sigue en iteración visual activa (discutido con el usuario, no cerrado) —
-  ver [`pendientes-plan-b.md`](./pendientes-plan-b.md) antes de asumir que el SVG committeado es la
-  versión final.
+  viejos (o Safari &lt;16) no lo van a mostrar. Concepto del glifo: la "K" como la grieta de un vidrio
+  roto — 4 cortes rectos (`stroke-linecap="butt"`) desde un punto de impacto central, inclinados
+  (`skewX`), extendidos más allá del viewBox y truncados por un `clipPath` con la forma del tile para
+  que salgan por su borde redondeado. La K es un agujero transparente recortado en la placa
+  (`<mask>`, no relleno propio); tanto el borde exterior de la placa como los dos filos de cada corte
+  de la K llevan el mismo tratamiento "esmerilado" (halo blureado + trazo nítido, offset perpendicular
+  a cada rayo para dejar el centro del hueco realmente transparente) y destellos (`<circle>` con bloom
+  vía `feGaussianBlur`/`feMerge`) que titilan asincrónicamente sobre esos contornos — nunca sueltos en
+  medio del vidrio.
+  **Nota:** el efecto de esmerilado de la placa en sí (más allá de sus contornos) sigue sin aplicarse,
+  y el offset/posición de filos y destellos se calcularon por geometría sin una pasada de ajuste visual
+  fino — ver [`pendientes-plan-b.md`](./pendientes-plan-b.md) antes de asumir que el SVG committeado es
+  la versión final.
 
 ## 11. Setup local / despliegue
 

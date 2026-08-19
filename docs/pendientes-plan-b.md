@@ -103,25 +103,27 @@ README no se actualizó.
 
 ## Marca K-Rez (logo) — en iteración visual, no cerrado
 
-`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) reflejan el concepto "grieta de
-vidrio inclinada" tal como quedó en la última vuelta aplicada a los archivos reales. En la conversación
-con el usuario surgieron correcciones/direcciones nuevas que **todavía no se portaron a estos SVG**:
+`web/assets/logo-mark.svg`/`logo-full.svg` (ver sección 10 del README) ya reflejan la dirección "placa
+esmerilada + destellos" acordada:
 
-- Los extremos de la grieta usan `stroke-linecap="round"` — el usuario pidió cortes planos, no
-  redondeados.
-- Las puntas terminan dentro del tile (corte plano flotando en el vidrio); la dirección acordada es
-  que la grieta debe salir por el borde redondeado del ícono (extender las coordenadas más allá del
-  viewBox + un `clipPath` con la misma forma del tile, ya validado en un prototipo).
-- La animación de flujo (gradiente que viaja por dentro del trazo) se reemplazó en los prototipos por
-  varias alternativas exploradas y descartadas en orden: bandas tipo ecualizador, pulso viajero,
-  ventana que se abre/cierra parcialmente, patrón de fondo independiente de la geometría de la K
-  (barras/diagonal), destello blanco sin color predefinido. La dirección más reciente (no aplicada
-  aún): la **placa** (no la K) lleva un efecto de vidrio esmerilado + destellos tipo bola de disco
-  (`feGaussianBlur` + varios `<circle>` titilando asincrónicos), y la K es únicamente el agujero
-  transparente recortado en esa placa — sin ningún efecto propio.
-- Todo esto se validó en una hoja de propuestas (Artifact separado, fuera del repo) antes de tocar los
-  archivos — pendiente decidir la versión final con el usuario y recién ahí actualizar
-  `logo-mark.svg`/`logo-full.svg` (y este mismo README) para que coincidan.
+- Cortes planos (`stroke-linecap="butt"`, ya no `round`).
+- La grieta sale por el borde redondeado del tile (coordenadas extendidas más allá del viewBox +
+  `clipPath` con la misma forma del tile que las trunca justo en el borde).
+- La K es un agujero transparente recortado con `<mask>` sobre la placa (`plateMask`/`plateMaskF`), sin
+  ningún efecto propio — se verificó con fondo claro que el hueco deja ver lo que hay detrás.
+- El esmerilado (halo blureado + trazo nítido) se aplica por igual al borde exterior de la placa y a los
+  dos filos de cada corte de la K (trazos paralelos con offset perpendicular a cada rayo, no un único
+  trazo centrado — así el centro del hueco queda realmente transparente en vez de tapado).
+- Destellos (`<circle>` + `feGaussianBlur`/`feMerge` para el bloom) sobre esos contornos —borde del tile
+  y filos de la K—, nunca sueltos en medio del vidrio; parpadean asincrónicamente (`dur`/`begin`
+  distintos por círculo) como en la referencia de "bola de disco".
+
+Pendiente de decidir con el usuario, no aplicado aún:
+
+- El efecto de vidrio esmerilado de la placa en sí (más allá de los contornos) — por ahora la placa es
+  un gradiente plano (`tileGrad`/`tileGradF`), sin textura ni `feGaussianBlur` propio.
+- Afinar a ojo el offset/ancho exacto de los dos filos de la K y la posición de los destellos —se
+  calcularon por geometría (vector perpendicular a cada rayo) sin una pasada de ajuste visual fino.
 
 ## Cosas menores, no bloqueantes
 
